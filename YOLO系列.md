@@ -44,3 +44,22 @@
 
 
 
+![](./.assets/Precisionrecall.svg)
+
+- 理解成：(True/False)地把它判断成了(Positive/Negative)
+
+
+
+# YOLOv1
+
+- 经典的One-Stage方法
+- 把检测问题转化为回归问题
+- 可以对视频进行实时检测，应用领域广
+
+  ![image-20230621144219581](./.assets/image-20230621144219581.png)
+
+
+
+核心思想：
+
+![image-20230621144241211](./.assets/image-20230621144241211.png)
