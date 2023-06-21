@@ -52,9 +52,11 @@ PASCAL VOC 2012有11530张图像，27450个标注，20个类别。
 
 
 
-**直观理解**：
+**直观理解**:
 
-![image-20230614214024585](./.assets/image-20230614214024585.png)
+![](./.assets/Precisionrecall.svg)
+
+
 
 
 
@@ -147,11 +149,11 @@ python detect.py  --source ./data/images/bus.jpg --weights weights/yolov5s.pt --
 
 # 4.1 YOLO系列发展史
 
-![image-20230618200927352](./assets/image-20230618200927352.png)
+![image-20230618200927352](./.assets/image-20230618200927352.png)
 
 
 
-![image-20230618201207647](./assets/image-20230618201207647.png)
+![image-20230618201207647](./.assets/image-20230618201207647.png)
 
 
 
