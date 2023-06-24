@@ -55,6 +55,44 @@
 
 
 
+- **$$(x, y)$$ 是BBox的中心相对于对于单元格的offset**
+
+对于下图中蓝色框的单元格坐标为 $ (x_{col} = 1, \  y_{row}=4) $，假设它预测的是红色的BBox，假设红色BBox的中心坐标为  $(x_{c}, \  y_{c})$，那么最终预测出的 $(x, y)$ 是经过归一化处理的，表示的是中心相对于单元格的offset，计算公示如下：
+
+$x = \frac{x_{c}}{w_i}S - x_{col}, \ y = \frac{y_c}{h_i}S - y_{row}$
+
+![image-20230624155703465](./.assets/image-20230624155703465.png)
+
+
+
+- **$(w, h)$ 是BBox相对于整个图片的比例**
+
+ 预测的BBox的宽和高为 $(w_b, h_b)$, $(w, h)$ 表示的是BBox相对于整个图片的占比，计算公式如下：
+
+$w = \frac{w_b}{w_i}, h = \frac{h_b}{h_i}$
+
+
+
+- confidence
+
+这个置信度由两部分组成，一部分是格子内是否有目标，而是BBox的准确度。定义为置信度 $P_{r}(Object) \times IOU_{pred}^{truth}$ .
+
+如果BBox内有物体，则 $P_r(Object) = 1$ , 此时置信度等于IOU；如果BBox内没有物体，则 $P_r(Object) = 0$， 此时置信度为0。
+
+
+
+- C类的条件概率
+
+条件概率定义为 $P_r(Class_i\ | \ Object)$，表示该单元格存在物体且属于第 $i$ 类的概率。
+
+在测试时，每个单元格预测最终输出的概率定义为：
+
+$P_r(Class_i\ |\ Object) \times P_r(Object) \times IOU_{pred}^{truth} = P_r(Class_i) \times IOU_{pred}^{truth}$
+
+
+
+
+
 ## 损失函数
 
 ![image-20230621204557184](./.assets/image-20230621204557184.png)

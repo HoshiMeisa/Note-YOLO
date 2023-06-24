@@ -1,4 +1,11 @@
-# 网络架构
+# 1 网络架构
+
+YOLOv5包括：
+
+- Backbone: Focus, BottleneckCPS, SPP
+- Head: PANet + Detect (YOLOv3/v4 Head)
+
+
 
 ![image-20230624093040192](./.assets/image-20230624093040192.png)
 
