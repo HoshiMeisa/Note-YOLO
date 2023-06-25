@@ -164,6 +164,10 @@ $$
 
 YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpooling之后得到 $13\times13$ 大小的特征图，并以此特征图采用卷积做预测。虽然 $13 \times 13$ 的feature map对于预测大的object以及足够了，但是对于预测小的object就不一定有效。这里主要是添加了一个层：**Passthrough Layer**。这个层的作用就是**将前面一层的 $26\times26$ 的feature map和本层的 $13 \times 13$ 的feature map进行连接**，有点像ResNet。
 
+
+
+将高层的特征呢给到底层，这样的话高层也会获得底层的特征
+
 ![image-20230624181640477](./.assets/image-20230624181640477.png)
 
 一拆四的方法如下：
@@ -184,15 +188,21 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpoo
 
 **总结来看，虽然YOLOv2做了很多改进，但是大部分都是借鉴其它论文的一些技巧，如Faster R-CNN的anchor boxes，YOLOv2采用anchor boxes和卷积做预测，这基本上与SSD模型（单尺度特征图的SSD）非常类似了，而且SSD也是借鉴了Faster R-CNN的RPN网络。从某种意义上来说，YOLOv2和SSD这两个one-stage模型与RPN网络本质上无异，只不过RPN不做类别的预测，只是简单地区分物体与背景。在two-stage方法中，RPN起到的作用是给出region proposals，其实就是作出粗糙的检测，所以另外增加了一个stage，即采用R-CNN网络来进一步提升检测的准确度（包括给出类别预测）。而对于one-stage方法，它们想要一步到位，直接采用“RPN”网络作出精确的预测，要因此要在网络设计上做很多的tricks。YOLOv2的一大创新是采用Multi-Scale Training策略，这样同一个模型其实就可以适应多种大小的图片了。**
 
+
+
+
+
 ## 3.Faster
 
 ### 3.1 New Network:Darknet-19
 
 在YOLO v1中，作者采用的训练网络是基于GooleNet,YOLOv2采用了一个新的基础模型（特征提取器），称为Darknet-19，包括19个卷积层和5个maxpooling层.
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='528' height='666'></svg>)
+![image-20230625151206958](./.assets/image-20230625151206958.png)
 
 Darknet-19与VGG16模型设计原则是一致的，**主要采用 $ 3\times3 $ 卷积，采用  $ 2\times2 $ 的maxpooling层，特征图维度降低2倍，同时特征图的channles增加两倍**。与NIN类似，Darknet-19最终**采用global avgpooling做预测**，并且在 $  3\times3  $ 卷积之间使用  $ 1\times1  $ 卷积来压缩特征图channles以降低模型计算量和参数。Darknet-19**每个卷积层后面使用了batch norm层**以加快收敛速度，降低模型过拟合。
+
+
 
 ### 3.2 Training for Classification
 
@@ -212,23 +222,31 @@ Darknet-19与VGG16模型设计原则是一致的，**主要采用 $ 3\times3 $ �
 
 在前面第2步之后，就开始把网络移植到detection，并开始基于检测的数据再进行fine-tuning。
 
-首先把最后一个卷积层、global avgpooling层以及softmax层去掉，然后添加**3个3\*3\*1024的卷积层，同时增加了一个passthrough层（详见：`2.6 Fine-Grained Features`）,最后每个后面都连接一个1\*1的卷积层输出预测结果，输出的channels数为：num_anchors\*(5+num_classes)**。比如对于VOC数据，由于每个grid cell我们需要预测5个box，每个box有5个坐标值和20个类别值，所以每个grid cell有125个channels（与YOLOv1不同，在YOLOv1中每个grid cell有30个channels，因为在YOLOv1中，类别概率是由grid cell来预测的，也就是说一个grid cell对应的两个box的类别概率是一样的，但是在YOLOv2中，类别概率是属于box的，**每个box对应一个类别概率**，而不是由grid cell决定，因此这边每个box对应25个预测值（5个坐标加20个类别值），而在YOLOv1中一个grid cell的两个box的20个类别值是一样的）。而对于COCO数据集则为425。最后作者在检测数据集上fine tune这个预训练模型160个epoch，学习率采用0.001，并且在第60和90epoch的时候将学习率除以10，weight decay采用0.0005。 在这一步中会使用 `2.7 Multi-Scale Training` 技巧
+首先把最后一个卷积层、global avgpooling层以及softmax层去掉，然后添加**3个3\*3\*1024的卷积层，同时增加了一个passthrough层（详见：`2.6 Fine-Grained Features`）,最后每个后面都连接一个1\*1的卷积层输出预测结果，输出的channels数为：num_anchors\*(5+num_classes)**。
+
+比如对于VOC数据，由于每个grid cell我们需要预测5个box，每个box有5个坐标值和20个类别值，所以每个grid cell有125个channels（与YOLOv1不同，在YOLOv1中每个grid cell有30个channels，因为在YOLOv1中，类别概率是由grid cell来预测的，也就是说一个grid cell对应的两个box的类别概率是一样的，但是在YOLOv2中，类别概率是属于box的，**每个box对应一个类别概率**，而不是由grid cell决定，因此这边每个box对应25个预测值（5个坐标加20个类别值），而在YOLOv1中一个grid cell的两个box的20个类别值是一样的）。而对于COCO数据集则为425。最后作者在检测数据集上fine tune这个预训练模型160个epoch，学习率采用0.001，并且在第60和90epoch的时候将学习率除以10，weight decay采用0.0005。 在这一步中会使用 `2.7 Multi-Scale Training` 技巧
+
+
 
 ### 3.4 损失函数
 
 每个grid cell预先生成五个先验框anchor，和YOLOv1一样，**对于训练图片中的ground truth，若其中心点落在某个cell内，那么该cell内的5个先验框所对应的边界框负责预测它**，具体是个边界框预测它，需要在训练中确定，即由那个**与ground truth的IOU最大的边界框预测它**(每个先验框尺寸不同，负责不同类型的预测)，而剩余的4个边界框不与该ground truth匹配。YOLOv2同样需要假定每个cell至多含有一个grounth truth，而在实际上基本不会出现多于1个的情况。与ground truth匹配的先验框计算坐标误差、置信度误差（此时target为1）以及分类误差，而其它的边界框只计算置信度误差（此时target为0）。**YOLOv2和YOLOv1的损失函数一样，为均方差函数**。
 
 $$
-{loss}_{t}= \\ 
+{loss}_{t}= \sum_{i=0}^{W} \sum_{j=0}^{H} \sum_{k=0}^{A} \\ 
 
-\sum_{i=0}^{W} \sum_{j=0}^{H} \sum_{k=0}^{A} 1_{\text {Max IoU }<\text { Thresh }} \lambda_{\text {noobj }} *\left(-b_{i j k}^{o}\right)^{2} \\ 
+1_{\text {Max IoU }<\text { Thresh }} \lambda_{\text {noobj }} *\left(-b_{i j k}^{o}\right)^{2} \\ 
 
 +1_{t<12800} \lambda_{\text {prior }} * \sum_{r \epsilon(x, y, w, h)}\left(\text { prior }_{k}^{r}-b_{i j k}^{r}\right)^{2} \\ 
 
-+1_{k}^{\text {truth }}( \lambda_{\text {coord }} * \sum_{r \epsilon(x, y, w, h)}\left(\text { truth }^{r}-b_{i j k}^{r}\right)^{2} +\lambda_{\text {obj }} \\
++1_{k}^{\text {truth }}( \lambda_{\text {coord }} * \sum_{r \epsilon(x, y, w, h)}\left(\text { truth }^{r}-b_{i j k}^{r}\right)^{2} \\ 
 
-*\left(I O U_{\text {truth }}^{k}-b_{i j k}^{o}\right)^{2} \left.+\lambda_{\text {class }} *\left(\sum_{c=1}^{c}\left(\text { truth }^{c}-b_{i j k}^{c}\right)^{2}\right)\right) \\
++\lambda_{\text {obj }} *\left(I O U_{\text {truth }}^{k}-b_{i j k}^{o}\right)^{2} \\
+
+\left.+\lambda_{\text {class }} *\left(\sum_{c=1}^{c}\left(\text { truth }^{c}-b_{i j k}^{c}\right)^{2}\right)\right) 
 $$
+![image-20230625152807224](./.assets/image-20230625152807224.png)
+
 首先 W,H 分别指的是特征图（13*13)的宽与高，而 A 指的是先验框数目（这里是5），各个 \lambda 值是各个loss部分的权重系数。
 
 - 第一项loss是计算background（不含物体）的置信度误差，需要先计算各个预测框和所有ground truth的IOU值，并且取最大值Max_IOU，如果该值小于一定的阈值（YOLOv2使用的是0.6），那么这个预测框就标记为background，需要计算noobj的置信度误差。
@@ -301,74 +319,4 @@ softmax操作也同时应该采用分组操作，下图上半部分为ImageNet�
 
 这个joint classification and detection的直观解释就是：**如果遇到来自分类集的图片则只计算分类的Loss，遇到来自检测集的图片则计算完整的Loss。** 另外YOLO9000的主网络基本和YOLOv2类似，只不过每个grid cell只采用3个box prior。
 
-## YOLO系列链接：
 
-## 参考：
-
-[小小将：目标检测|YOLOv2原理与实现(附YOLOv3)](https://zhuanlan.zhihu.com/p/35325884)
-
-[YOLO v2算法详解_AI之路的博客-CSDN博客_yolov2算法](https://link.zhihu.com/?target=https%3A//blog.csdn.net/u014380165/article/details/77961414)
-
-[极市平台：YOLO算法最全综述：从YOLOv1到YOLOv5](https://zhuanlan.zhihu.com/p/297965943)
-
-
-
-编辑于 2022-10-05 16:02
-
-[YOLO](https://www.zhihu.com/topic/21714180)
-
-[目标检测](https://www.zhihu.com/topic/19596960)
-
-赞同 5添加评论
-
-分享
-
-喜欢收藏申请转载
-
-
-
-赞同 5
-
-分享
-
-![img](https://pica.zhimg.com/v2-f11dafaa00ec9d58790d437aabb8b5ea_l.jpg?source=32738c0c)
-
-评论千万条，友善第一条
-
-
-
-还没有评论，发表第一个评论吧
-
-### 文章被以下专栏收录
-
-- [![CV 目标检测](https://pic1.zhimg.com/4b70deef7_l.jpg?source=172ae18b)](https://www.zhihu.com/column/c_1553891378555457536)
-
-- ## [CV 目标检测](https://www.zhihu.com/column/c_1553891378555457536)
-
-- 目标检测系列算法学习、实现记录
-
-### 推荐阅读
-
-- # yolov3自学笔记(三)---非极大值抑制
-
-- 今天整理下non_max_suppression(中文名：非极大值抑制)。 另外两篇：译夫：yolov3自学笔记（一）译夫：yolov3自学笔记（二）先说下这个算法的流程：在此之前先说下iou的概念：通俗理解就是…
-
-- 译夫
-
-- ![3.1 YOLO入门教程：YOLOv3(1)-解读YOLOv3](https://pic1.zhimg.com/v2-a1781eed59214623a56ec3c4dc6afbd6_250x0.jpg?source=172ae18b)
-
-- # 3.1 YOLO入门教程：YOLOv3(1)-解读YOLOv3
-
-- Kissr...发表于第二卷-基...
-
-- ![2.1 YOLO入门教程：YOLOv2(1)-解读YOLOv2](https://pic1.zhimg.com/v2-b0cdbef87a9cbb48915947c400d95f1f_250x0.jpg?source=172ae18b)
-
-- # 2.1 YOLO入门教程：YOLOv2(1)-解读YOLOv2
-
-- Kissr...发表于第二卷-基...
-
-- ![4.1 YOLO入门教程：YOLOv4(1)-浅析YOLOv4](https://picx.zhimg.com/v2-590c8f3b9a8329087b2a397782967b5f_250x0.jpg?source=172ae18b)
-
-- # 4.1 YOLO入门教程：YOLOv4(1)-浅析YOLOv4
-
-- Kissr...发表于第二卷-基...
