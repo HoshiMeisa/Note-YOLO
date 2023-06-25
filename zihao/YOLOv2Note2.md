@@ -38,8 +38,6 @@
 
 
 
-
-
 ## 2. Better
 
 ### 2.1 Batch Normalization
@@ -47,6 +45,8 @@
 BN层就是对网络的每一层的输入进行归一化，使得网络不需要去学数据分布，加快了收敛速度，而且可以起到一定正则化效果，降低模型的过拟合。在YOLOv2中，**每个卷积层后面添加了Batch Normalization层**，不再使用dropout。
 
 实验证明添加了BN层可以提高2%的mAP。
+
+![image-20230625175251701](./.assets/image-20230625175251701.png)
 
 BN大体可以分为四步： 
 
@@ -77,6 +77,8 @@ X_normed = (X - m) / (std + self.epsilon)	#归一化
 out = self.gamma * X_normed + self.beta	#重构变换
 ```
 
+BN之后的效果
+
 <img src="./.assets/image-20230624163530164.png" alt="image-20230624163530164" style="zoom:80%;" />
 
 经过BN之后，原本很分散的数据都集中到了0附近，对于双曲正切函数Tanh来说在0附近有较大得梯度。 
@@ -93,7 +95,8 @@ out = self.gamma * X_normed + self.beta	#重构变换
 > **Fine-tuning**：冻结预训练模型的部分卷积层（通常是靠近输入的多数卷积层，因为这些层保留了大量底层信息）甚至不冻结任何网络层，训练剩下的卷积层（通常是靠近输出的部分卷积层）和全连接层。
 
 - Fine-tuning原理：利用已知网络结构和已知网络的参数，修改output层为我们自己的层，微调最后一层前的若干层的训练参数，这样就有效利用了深度神经网络强大的泛化能力，又免去了设计复杂的模型以及耗时良久的训练。
-- YOLOv1在采用 224×224 分类模型预训练后将分辨率增加到 448×448 ，并使用这个高分辨率在检测数据集上finetune。但是直接切换分辨率，检测模型可能难以快速适应高分辨率。所以YOLOv2增加了**在ImageNet数据集上使用**448×448**输入来finetune分类网络**这一中间过程（10 epochs）.**YOLOv2将预训练分成两步：先用**224×224**的输入从头开始训练网络，大概160个epoch，然后再将输入调整到**448×448**，再训练10个epoch**，这可以使得模型在检测数据集上finetune之前已经适应高分辨率输入。使用高分辨率分类器后，YOLOv2的mAP提升了约4%。
+- YOLOv1在采用 224×224 分类模型预训练后将分辨率增加到 448×448 ，并使用这个高分辨率在检测数据集上finetune。但是直接切换分辨率，检测模型可能难以快速适应高分辨率。所以YOLOv2增加了**在ImageNet数据集上使用**448×448**输入来finetune分类网络**这一中间过程（10 epochs）
+- **YOLOv2将预训练分成两步：先用**224×224**的输入从头开始训练网络，大概160个epoch，然后再将输入调整到**448×448**，再训练10个epoch**，这可以使得模型在检测数据集上finetune之前已经适应高分辨率输入。使用高分辨率分类器后，YOLOv2的mAP提升了约4%。
 
 
 
@@ -104,6 +107,8 @@ out = self.gamma * X_normed + self.beta	#重构变换
 YOLOv2借鉴了Faster R-CNN的思想，引入anchor，**在每个grid cell预先设定一组不同大小和宽高比的边框，来覆盖整个图像的不同位置和多种尺度**。首先将网络的全连接层和最后一个pooling层去掉，使用最后的卷积层可以有更高分辨率的特征，然后缩减网络，用 $416×416$ 的输入代替原来的 $448×448$ ，如此可以获得奇数大小的宽和高（特征图恰好有一个中心位置），最终输出 $13×13$ 的feature map。YOLOv2使用了anchor boxes之后，**每个位置的各个anchor box都单独预测一套（宽高分开）分类概率值**。
 
 使用anchor boxes之后，YOLOv2的mAP有稍微下降（这里下降的原因，我猜想是YOLOv2虽然使用了anchor boxes，但是依然采用YOLOv1的训练方法）。YOLOv1只能预测98个边界框，而YOLOv2使用anchor boxes之后可以预测上千个边界框 $(13 \times 13 \times num_{anchors})$，召回率大大提升，由原来的81%升至88%。
+
+![image-20230625184621996](./.assets/image-20230625184621996.png)
 
 
 
@@ -222,9 +227,9 @@ Darknet-19与VGG16模型设计原则是一致的，**主要采用 $ 3\times3 $ �
 
 在前面第2步之后，就开始把网络移植到detection，并开始基于检测的数据再进行fine-tuning。
 
-首先把最后一个卷积层、global avgpooling层以及softmax层去掉，然后添加**3个3\*3\*1024的卷积层，同时增加了一个passthrough层（详见：`2.6 Fine-Grained Features`）,最后每个后面都连接一个1\*1的卷积层输出预测结果，输出的channels数为：num_anchors\*(5+num_classes)**。
+首先把最后一个卷积层、global avgpooling层以及softmax层去掉，然后添加**3个3\*3\*1024的卷积层，同时增加了一个passthrough层, 最后每个后面都连接一个1\*1的卷积层输出预测结果，输出的channels数为：num_anchors\(5+num_classes)**。
 
-比如对于VOC数据，由于每个grid cell我们需要预测5个box，每个box有5个坐标值和20个类别值，所以每个grid cell有125个channels（与YOLOv1不同，在YOLOv1中每个grid cell有30个channels，因为在YOLOv1中，类别概率是由grid cell来预测的，也就是说一个grid cell对应的两个box的类别概率是一样的，但是在YOLOv2中，类别概率是属于box的，**每个box对应一个类别概率**，而不是由grid cell决定，因此这边每个box对应25个预测值（5个坐标加20个类别值），而在YOLOv1中一个grid cell的两个box的20个类别值是一样的）。而对于COCO数据集则为425。最后作者在检测数据集上fine tune这个预训练模型160个epoch，学习率采用0.001，并且在第60和90epoch的时候将学习率除以10，weight decay采用0.0005。 在这一步中会使用 `2.7 Multi-Scale Training` 技巧
+比如对于VOC数据，由于每个grid cell我们需要预测5个box，每个box有5个坐标值和20个类别值，所以每个grid cell有125个channels（与YOLOv1不同，在YOLOv1中每个grid cell有30个channels，因为在YOLOv1中，类别概率是由grid cell来预测的，也就是说一个grid cell对应的两个box的类别概率是一样的，但是在YOLOv2中，类别概率是属于box的，**每个box对应一个类别概率**，而不是由grid cell决定，因此这边每个box对应25个预测值（5个坐标加20个类别值），而在YOLOv1中一个grid cell的两个box的20个类别值是一样的）。而对于COCO数据集则为425。最后作者在检测数据集上fine tune这个预训练模型160个epoch，学习率采用0.001，并且在第60和90epoch的时候将学习率除以10，weight decay采用0.0005。 在这一步中会使用技巧
 
 
 
@@ -247,17 +252,7 @@ $$
 $$
 ![image-20230625152807224](./.assets/image-20230625152807224.png)
 
-首先 W,H 分别指的是特征图（13*13)的宽与高，而 A 指的是先验框数目（这里是5），各个 \lambda 值是各个loss部分的权重系数。
 
-- 第一项loss是计算background（不含物体）的置信度误差，需要先计算各个预测框和所有ground truth的IOU值，并且取最大值Max_IOU，如果该值小于一定的阈值（YOLOv2使用的是0.6），那么这个预测框就标记为background，需要计算noobj的置信度误差。
-- 第二项是计算先验框与预测宽的坐标误差，但是只在前12800个iterations间计算，为了在训练前期使预测框快速学习到先验框的形状。
-- 第三大项计算与某个ground truth匹配的预测框各部分loss值，包括坐标误差、置信度误差以及分类误差。
-
-先说一下匹配原则，**对于某个ground truth，首先要确定其中心点要落在哪个cell上，然后计算这个cell的5个先验框与ground truth的IOU值**（YOLOv2中bias_match=1），计算IOU值时不考虑坐标，只考虑形状，所以先将先验框与ground truth的中心点都偏移到同一位置（原点），然后计算出对应的IOU值，**IOU值最大的那个先验框与ground truth匹配，对应的预测框用来预测这个ground truth**。在计算obj置信度时，target=1，但与YOLOv1一样而增加了一个控制参数rescore，当其为1时，target取预测框与ground truth的真实IOU值（cfg文件中默认采用这种方式）。
-
-**对于那些没有与ground truth匹配的先验框（与预测框对应），除去那些Max_IOU低于阈值的，其它的就全部忽略，不计算任何误差**。这点在YOLOv3论文中也有相关说明：YOLO中一个ground truth只会与一个先验框匹配（IOU值最大的），对于那些IOU值低于一定阈值的先验框，其预测结果就忽略了。
-
-在计算boxes的 w 和 h 误差时，YOLOv1中采用的是平方根以降低boxes的大小对误差的影响，而YOLOv2是直接计算，但是根据ground truth的大小对权重系数进行修正：coord_scale * (2 - truth.w*truth.h)（这里w和h都归一化到(0,1))，这样对于尺度较小的boxes其权重系数会更大一些，可以放大误差，起到和YOLOv1计算平方根相似的效果（参考[YOLO v2 损失函数源码分析](https://link.zhihu.com/?target=http%3A//www.cnblogs.com/YiXiaoZhou/p/7429481.html))。
 
 
 
@@ -265,9 +260,9 @@ $$
 
 此处再补充一下YOLOv2的训练过程（主要分为三个阶段）：
 
-- 第一阶段：在ImageNet分类数据集上预训练Darknet-19，此时模型输入为224*224，共训练160个epochs（详见`3.2 Training for Classification`）
-- 第二阶段：将模型的输入调整为448*448，继续在ImageNet数据集山finetune分类模型，训练10个epochs（详见`3.2 Training for Classification`）
-- 第三阶段：修改（详见：[网络结构可视化](https://link.zhihu.com/?target=http%3A//ethereon.github.io/netscope/%23/gist/d08a41711e48cf111e330827b1279c31)）Darknet-19分类模型为检测模型，并且在检测数据集上继续finetune网络（见`3.3 Training for Detection`)
+- 第一阶段：在ImageNet分类数据集上预训练Darknet-19，此时模型输入为224*224，共训练160个epochs
+- 第二阶段：将模型的输入调整为448*448，继续在ImageNet数据集上finetune分类模型，训练10个epochs
+- 第三阶段：修改Darknet-19分类模型为检测模型，并且在检测数据集上继续finetune网络
 
 
 
@@ -281,42 +276,15 @@ $$
 
 作者通过ImageNet训练分类、COCO和VOC数据集来训练检测，这是一个很有价值的思路，可以让我们达到比较优的效果。 通过将两个数据集混合训练，**如果遇到来自分类集的图片则只计算分类的Loss，遇到来自检测集的图片则计算完整的Loss。**
 
-但是ImageNet对应分类有9000种，而COCO则只提供80种目标检测，作者使用multi-label模型，即假定一张图片可以有多个label，并且不要求label间独立。通过作者Paper里的图来说明，由于ImageNet的类别是从WordNet选取的，作者采用以下策略重建了一个树形结构（称为分层树）：
+但是ImageNet对应分类有9000种，而COCO则只提供80种目标检测，不能简单的合并检测数据集和分类数据集，因为Softmax对于所有的分类类别是互斥的，如果合并后数据集中有相似的类别，比如熊和美洲黑熊，就无法很好的完成任务。
 
-1. 遍历Imagenet的label，然后在WordNet中寻找该label到根节点(指向一个物理对象)的路径；
-2. 如果路径直有一条，那么就将该路径直接加入到分层树结构中；
-3. 否则，从剩余的路径中选择一条最短路径，加入到分层树。
-
-这个分层树我们称之为 WordTree，作用就在于将两种数据集按照层级进行结合。
-
-可以参考下图来理解WordTree
-
-底层的特征语义信息比较少，但是目标位置精确；
-
-相反高层的特征语义信息比较丰富，但是目标的位置比较粗略。但是只提取了一种特征，在构建子特征金字塔时是从后面的层次开始，并且又增加了几个新的特征层。这样损失了高分辨率的特征图，对检测小物体是不理的
+![image-20230625185148661](./.assets/image-20230625185148661.png)
 
 
 
+可以利用WordTree，结构如下
 
+![image-20230625185319869](./.assets/image-20230625185319869.png)
 
-### 4.2 概率计算
-
-分类时的概率计算借用了决策树思想，**某个节点的概率值等于该节点到根节点的所有条件概率之积**。最终结果是一颗 WordTree （视觉名词组成的层次结构模型）。用WordTree执行分类时，预测每个节点的条件概率。如果想求得特定节点的绝对概率，只需要沿着路径做连续乘积。例如，如果想知道一张图片是不是“Norfolk terrier ”需要计算：
-
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='675' height='155'></svg>)
-
-另外，为了验证这种方法作者在WordTree（用1000类别的ImageNet创建）上训练了Darknet-19模型。为了创建WordTree1k，作者添加了很多中间节点，把标签由1000扩展到1369。训练过程中ground truth标签要顺着向根节点的路径传播。例如，如果一张图片被标记为“Norfolk terrier”，它也被标记为“dog” 和“mammal”等。为了计算条件概率，模型预测了一个包含1369个元素的向量，而且**基于所有“同义词集”计算softmax**，其中“同义词集”是同一概念的下位词。
-
-softmax操作也同时应该采用分组操作，下图上半部分为ImageNet对应的原生Softmax，下半部分对应基于WordTree的Softmax：
-
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='719' height='704'></svg>)
-
-通过上述方案构造WordTree，得到对应9418个分类，通过重采样保证Imagenet和COCO的样本数据比例为4:1。
-
-### 4.3 YOLO9000训练
-
-前面介绍完了如何融合分类和检测的数据集，接下来就是训练的问题了，文中采用的是Joint classification and detection，什么意思呢？原文表述如下：During training we mix images from both detection and classification datasets. When our network sees an image labelled for detection we can backpropagate based on the full YOLOv2 loss function. When it sees a classification image we only backpropagate loss from the classification specific parts of the architecture.
-
-这个joint classification and detection的直观解释就是：**如果遇到来自分类集的图片则只计算分类的Loss，遇到来自检测集的图片则计算完整的Loss。** 另外YOLO9000的主网络基本和YOLOv2类似，只不过每个grid cell只采用3个box prior。
-
+![image-20230625185440595](./.assets/image-20230625185440595.png)
 
