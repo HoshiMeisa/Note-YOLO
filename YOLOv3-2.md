@@ -182,7 +182,7 @@ loss += xy_loss + wh_loss + confidence_loss + class_loss
 
 以上是一段keras框架描述的YOLOv3 的loss_function代码。忽略恒定系数不看，可以从上述代码看出：除了**w, h的损失函数依然采用总方误差**之外，**其他部分的损失函数用的是二值交叉熵**最后加到一起。（binary_crossentropy是一个最简单的交叉熵，一般用于二分类）
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1255' height='517'></svg>)
+
 
 ## 6.YOLOv3的训练与预测
 
@@ -192,22 +192,16 @@ loss += xy_loss + wh_loss + confidence_loss + class_loss
 
 ### 6.1 训练
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1221' height='601'></svg>)
-
-训练过程中，当输入为 416*416 模型会输出10647个预测框(三种尺寸的特征图，每种尺寸三个预测框一共 (13\times13+26\times26+52\times52)\times3=10647 )，为每个输出框根据训练集中的ground truth为每个预测框**打上标签**(正例：与ground truth的IOU最大；负例：IOU<阈值0.5；忽略：预测有物体的框但IOU并非最大在NMS中被舍去)。再使用**损失函数**进行优化，更新网络参数。
+训练过程中，当输入为 416*416 模型会输出10647个预测框(三种尺寸的特征图，每种尺寸三个预测框一共 $(13\times13+26\times26+52\times52)\times3=10647 )$，为每个输出框根据训练集中的ground truth为每个预测框**打上标签**(正例：与ground truth的IOU最大；负例：IOU<阈值0.5；忽略：预测有物体的框但IOU并非最大在NMS中被舍去)。再使用**损失函数**进行优化，更新网络参数。
 
 ### 6.2 预测
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='3458' height='909'></svg>)
-
-如上图所示：在训练过程中对于每幅输入图像，YOLOv3会预测三个不同大小的3D tensor，对应着三个不同的scale，设计这三个scale的目的是为了能检测出不同大小的物体。 这里以13 * 13的tensor为例，对于这个scale,原始输入图像会被分割成13 × 13的grid cell，每个grid cell对应着3D tensor中的1x1x255这样一个长条形voxel。255是由3*(4+1+80)而来，由上图可知，公式 N\times N\times [3\times (4+1+80)] 中 N\times N 表示的是scale size例如上面提到的 13\times13 。3表示的是each grid cell predict 3 boxes。4表示的是坐标值即 (t_x,t_y,t_h,t_w) 。1表示的是置信度，80表示的是COCO类别数目。
+在训练过程中对于每幅输入图像，YOLOv3会预测三个不同大小的3D tensor，对应着三个不同的scale，设计这三个scale的目的是为了能检测出不同大小的物体。 这里以13 * 13的tensor为例，对于这个scale,原始输入图像会被分割成13 × 13的grid cell，每个grid cell对应着3D tensor中的1x1x255这样一个长条形voxel。255是由3*(4+1+80)而来，由上图可知，公式 $N\times N\times [3\times (4+1+80)]$ 中 $N\times N$ 表示的是scale size例如上面提到的 $13\times13$ 。3表示的是each grid cell predict 3 boxes。4表示的是坐标值即 $(t_x,t_y,t_h,t_w)$ 。1表示的是置信度，80表示的是COCO类别数目。
 
 - 如果训练集中某一个ground truth对应的bounding box中心恰好落在了输入图像的某一个grid cell中，那么这个grid cell就负责预测此物体的bounding box,于是这个grid cell所对应的置信度为1，其他grid cell的置信度为0．每个grid cell都会被赋予3个不同大小的prior box，学习过程中，这个grid cell会学会如何选择哪个大小的prior box。作者定义的是**选择与ground truth的IOU重合度最高的prior box**。
 - 上面说到的三个预设的不同大小的prior box，这三个大小是如何计算的，首先在训练前，将COCO数据集中的所有bbox使用k-means clustering分成９个类别，每３个类别对应一个scale，故总共３个scale，这种关于box大小的先验信息帮助网络准确预测每个box的offset和coordinate。从直观上，大小合适的box会使得网络更精准的学习。（**详见《[YOLOv2解析](https://zhuanlan.zhihu.com/p/564732055)》中的2.4 Dimension Cluster**）
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1255' height='632'></svg>)
-
-将图片输入训练好的预测网络，首先输出预测框的信息 (obj,t_x,t_y,t_h,t_w,cls) ，每个预测框的class-specific confidence score(conf_score=obj*cls)以后，设置**阈值**，滤掉得分低的预测框，对保留的预测框进行**NMS处理**，就得到最终的检测结果。（**详见《[YOLOv1解析](https://zhuanlan.zhihu.com/p/564708049)》中的3. IOU和NMS处理流程**）
+将图片输入训练好的预测网络，首先输出预测框的信息 $(obj,t_x,t_y,t_h,t_w,cls) $，每个预测框的$class-specific confidence score(conf_score=obj*cls)$ 以后，设置**阈值**，滤掉得分低的预测框，对保留的预测框进行**NMS处理**，就得到最终的检测结果。（**详见《[YOLOv1解析](https://zhuanlan.zhihu.com/p/564708049)》中的3. IOU和NMS处理流程**）
 
 - 阈值处理：去除掉大部分不含预测物体的背景框
 - NMS处理：去除掉多余的bounding box，防止重复预测同一物体
@@ -216,96 +210,12 @@ loss += xy_loss + wh_loss + confidence_loss + class_loss
 
 然后再遍历三种尺度
 
-\rightarrow 遍历每种尺度的预测框
+$\rightarrow$ 遍历每种尺度的预测框
 
-\rightarrow 将预测框分类scores中最大的作为该box的预测类别
+$\rightarrow$ 将预测框分类scores中最大的作为该box的预测类别
 
-\rightarrow 将预测框的confidence与其80维的分类scores相乘
+$\rightarrow$ 将预测框的confidence与其80维的分类scores相乘
 
-\rightarrow 设定nms_thresh和iou_thresh，使用nms和iou去除背景边框和重复边框
+$\rightarrow$ 设定nms_thresh和iou_thresh，使用nms和iou去除背景边框和重复边框
 
-\rightarrow 遍历留下的每一个预测框，可视化
-
-## YOLO系列链接：
-
-## 参考：
-
-[(卷积神经网络——FPN(Feature Pyramid Networks)介绍_itlilyer的博客-CSDN博客_fpn神经网络](https://link.zhihu.com/?target=https%3A//blog.csdn.net/itlilyer/article/details/111321634%3Fspm%3D1001.2101.3001.6650.2%26utm_medium%3Ddistribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2.pc_relevant_default%26depth_1-utm_source%3Ddistribute.pc_relevant.none-task-blog-2~default~CTRLIST~Rate-2.pc_relevant_default%26utm_relevant_index%3D5)
-
-[YOLO v3网络结构分析_霹雳吧啦Wz-CSDN博客_YOLOv3网络结构](https://link.zhihu.com/?target=https%3A//blog.csdn.net/qq_37541097/article/details/81214953)
-
-[深入浅出Yolo系列之Yolov3&Yolov4&Yolov5&Yolox核心基础知识完整讲解 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/143747206)
-
-[【精读AI论文】YOLO V3目标检测（附YOLOV3代码复现）_哔哩哔哩_bilibili](https://link.zhihu.com/?target=https%3A//www.bilibili.com/video/BV1Vg411V7bJ/%3Fspm_id_from%3D333.788.recommend_morevideo.0)
-
-[YOLO系列之YOLO v3【深度解析】_木盏-CSDN博客_YOLO3](https://link.zhihu.com/?target=https%3A//blog.csdn.net/leviopku/article/details/82660381)
-
-[YOLO算法最全综述：从YOLOv1到YOLOv5 - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/297965943)
-
-编辑于 2022-10-05 17:35
-
-「真诚赞赏，手留余香」
-
-赞赏
-
-还没有人赞赏，快来当第一个赞赏的人吧！
-
-[YOLOv3](https://www.zhihu.com/topic/20756884)
-
-[深度学习（Deep Learning）](https://www.zhihu.com/topic/19813032)
-
-[目标检测](https://www.zhihu.com/topic/19596960)
-
-已赞同 8添加评论
-
-分享
-
-喜欢收藏申请转载
-
-
-
-已赞同 8
-
-分享
-
-![img](https://picx.zhimg.com/v2-f11dafaa00ec9d58790d437aabb8b5ea_l.jpg?source=32738c0c)
-
-评论千万条，友善第一条
-
-
-
-还没有评论，发表第一个评论吧
-
-### 文章被以下专栏收录
-
-- [![CV 目标检测](https://picx.zhimg.com/4b70deef7_l.jpg?source=172ae18b)](https://www.zhihu.com/column/c_1553891378555457536)
-
-- ## [CV 目标检测](https://www.zhihu.com/column/c_1553891378555457536)
-
-- 目标检测系列算法学习、实现记录
-
-### 推荐阅读
-
-- ![YOLOv3 算法改进](https://picx.zhimg.com/v2-5d322f1615aa392fee13021759a33e16_250x0.jpg?source=172ae18b)
-
-- # YOLOv3 算法改进
-
-- AI高级人...发表于深度人脸识...
-
-- ![2.2 YOLO入门教程：YOLOv2(2)-搭建更好的YOLOv2+网络](https://pic1.zhimg.com/v2-ace9c12657f77fba3a7d51bb9160e705_250x0.jpg?source=172ae18b)
-
-- # 2.2 YOLO入门教程：YOLOv2(2)-搭建更好的YOLOv2+网络
-
-- Kissr...发表于第二卷-基...
-
-- # 从零开始手把手教你训练YOLOv5
-
-- 模型简介YOLOv5是一个在COCO数据集上预训练的物体检测架构和模型系列，它代表了Ultralytics对未来视觉AI方法的开源研究，其中包含了经过数千小时的研究和开发而形成的经验教训和最佳实践。Y…
-
-- 智星云算力平台
-
-- # 目标检测之YOLOv3算法: An Incremental Improvement
-
-- \1. 前言 论文地址：https://pjreddie.com/media/files/papers/YOLOv3.pdf 相关代码：https://github.com/yjh0410/YOLOv2-YOLOv3_PyTorch 目标检测之YOLO算法：YOLOv1,YOLOv2,YOLOv3,TinyYOL…
-
-- 初识CV发表于初识CV
+$\rightarrow$ 遍历留下的每一个预测框，可视化
