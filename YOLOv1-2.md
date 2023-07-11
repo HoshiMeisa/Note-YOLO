@@ -167,15 +167,21 @@ $$
 
 总结起来就是：
 
-- 对于有object的cell，那么计算cell的分类误差，然后cell中两个BBox的置信度误差（ \hat{C}i=1*IOU^{truth}{pred} ），然后cell中和ground truth box的IoU最大的BBox的位置误差。
+- 对于有object的cell，那么计算cell的分类误差，然后cell中两个BBox的置信度误差（$ \hat{C}i=1*IOU^{truth}{pred} $），然后cell中和ground truth box的IoU最大的BBox的位置误差。
 
+$$
 分类误差=\sum_{i=0}^{S^{2}} \mathbb{1}_{i}^{\text {obj }} \sum_{c \in \text { classes }}\left(p_{i}(c)-\hat{p}_{i}(c)\right)^{2} \\置信度误差= \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\
 
 位置误差= \lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(x_{i}-\hat{x}_{i}\right)^{2}+\left(y_{i}-\hat{y}_{i}\right)^{2}\right] \\ +\lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(\sqrt{w_{i}}-\sqrt{\hat{w}_{i}}\right)^{2}+\left(\sqrt{h_{i}}-\sqrt{\hat{h}_{i}}\right)^{2}\right] \\ \\
+$$
 
-- 对于没有object的cell，那就只计算cell中两个BBox的置信度误差( \hat{C}i=0*IOU^{truth}{pred}=0 ）。
+- 对于没有object的cell，那就只计算cell中两个BBox的置信度误差( $\hat{C}i=0*IOU^{truth}{pred}=0 $）。
 
+$$
 置信度误差=\lambda_{\text {noobj }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {noobj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\
+$$
+
+
 
 ### 5. 优缺点
 
@@ -190,75 +196,3 @@ $$
 - **预测阶段输入图片尺寸限制**。由于输出层为全连接层，因此在检测时，YOLO训练模型只支持与训练图像相同分辨率的输入图片。
 - **群体检测困难**。虽然每个格子可以预测B个bounding box，但是最终只选择只选择IOU最高的bounding box作为物体检测输出，即**每个格子最多只预测出一个物体**。当物体占画面比例较小，如图像中包含畜群或鸟群时，每个格子包含多个物体，但却只能检测出其中一个。这是YOLO方法的一个缺陷。
 - **小物体检测困难** ,YOLO loss函数中，大物体IOU误差和小物体IOU误差对网络训练中loss贡献值接近（虽然采用求平方根方式，但没有根本解决问题）。因此，对于小物体，小的IOU误差也会对网络优化过程造成很大的影响，从而降低了物体检测的定位准确性。
-
-## YOLO系列链接：
-
-## 参考：
-
-[Jacqueline：【目标检测】基础知识：IoU、NMS、Bounding box regression420 赞同 · 36 评论文章](https://zhuanlan.zhihu.com/p/60794316)
-
-[极市平台：YOLO算法最全综述：从YOLOv1到YOLOv5879 赞同 · 19 评论文章](https://zhuanlan.zhihu.com/p/297965943)
-
-[【精读AI论文】YOLO V1目标检测，看我就够了_哔哩哔哩_bilibili](https://link.zhihu.com/?target=https%3A//www.bilibili.com/video/BV15w411Z7LG%3Fp%3D4)
-
-
-
-编辑于 2022-10-05 12:54
-
-[YOLO](https://www.zhihu.com/topic/21714180)
-
-[目标检测](https://www.zhihu.com/topic/19596960)
-
-赞同 2添加评论
-
-分享
-
-喜欢收藏申请转载
-
-
-
-赞同 2
-
-分享
-
-![img](https://picx.zhimg.com/v2-f11dafaa00ec9d58790d437aabb8b5ea_l.jpg?source=32738c0c)
-
-评论千万条，友善第一条
-
-
-
-还没有评论，发表第一个评论吧
-
-### 文章被以下专栏收录
-
-- [![CV 目标检测](https://picx.zhimg.com/4b70deef7_l.jpg?source=172ae18b)](https://www.zhihu.com/column/c_1553891378555457536)
-
-- ## [CV 目标检测](https://www.zhihu.com/column/c_1553891378555457536)
-
-- 目标检测系列算法学习、实现记录
-
-### 推荐阅读
-
-- # yolov3自学笔记（二）
-
-- 上文我们说到了yolov3的网络结构，但是后面那个else里面的没有继续，其实这个else里面就是有target的情况，也就是训练的时候要用的。 下面我们继续看后面发生了什么事情。else里面的代码如…
-
-- 译夫
-
-- # yolov3自学笔记（一）
-
-- 关于yolov3的介绍略过，因为这篇文章是个小笔记 本片主要理清下yolov3的模型，yolov3的模型用的叫darknet53，然后我们从代码来入手看下darknet53,除了darknet53，其实还提供了一个darknet-t…
-
-- 译夫
-
-- # yolov3自学笔记(三)---非极大值抑制
-
-- 今天整理下non_max_suppression(中文名：非极大值抑制)。 另外两篇：译夫：yolov3自学笔记（一）译夫：yolov3自学笔记（二）先说下这个算法的流程：在此之前先说下iou的概念：通俗理解就是…
-
-- 译夫
-
-- ![yolov3学习笔记](https://picx.zhimg.com/v2-b98ff755d1ff31f2095f766ab01e36af_250x0.jpg?source=172ae18b)
-
-- # yolov3学习笔记
-
-- LuckyMaker

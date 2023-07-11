@@ -2,7 +2,7 @@
 
 ![YOLO学习笔记[3]——YOLOv3详解](https://picx.zhimg.com/70/v2-ba0f2e39eb12b2e83b6101e7432feb24_1440w.image?source=172ae18b&biz_tag=Post)
 
-# YOLOv3详解
+# YOLOv3
 
 YOLOv3模型相较之前复杂了许多，可以通过**改变模型结构来权衡速度和精度**，而且保留了很多v2和v1的特性，由于v3的论文写的十分随意，所以掌握v1和v2是十分必要的。
 
@@ -87,9 +87,7 @@ YOLO每一代的提升很大一部分决定于backbone网络的提升，从v2的
 
 ### 3.2 FPN介绍
 
-```
-FPN论文链接：https://arxiv.org/abs/1612.03144
-```
+[FPN论文链接](https://arxiv.org/abs/1612.03144)
 
 特征图金字塔网络FPN（Feature Pyramid Networks）是2017年提出的一种网络，FPN主要解决的是物体检测中的多尺度问题，通过简单的网络连接改变，在基本不增加原有模型计算量的情况下，大幅度提升了小物体检测的性能。
 
@@ -144,7 +142,7 @@ FPN论文链接：https://arxiv.org/abs/1612.03144
 
 ![image-20230624224221447](./.assets/image-20230624224221447.png)
 
-> 输入有3个通道，同时有2个卷积核。对于每个卷积核，先在输入3个通道分别作卷积，再将3个通道结果加起来得到卷积输出。**所以对于某个卷积层，无论输入图像有多少个通道，输出图像通道数总是等于卷积核数量**！ 对**多通道图像做**1\times1**卷积**，其实就是将输入图像于每个通道乘以卷积系数后加在一起，即相当于把原图像中本来 **各个独立的通道“联通”**在了一起。
+> 输入有3个通道，同时有2个卷积核。对于每个卷积核，先在输入3个通道分别作卷积，再将3个通道结果加起来得到卷积输出。**所以对于某个卷积层，无论输入图像有多少个通道，输出图像通道数总是等于卷积核数量**！ 对**多通道图像做** $1\times1$ **卷积**，其实就是将输入图像于每个通道乘以卷积系数后加在一起，即相当于把原图像中本来 **各个独立的通道“联通”**在了一起。
 
 
 
@@ -162,7 +160,7 @@ FPN论文链接：https://arxiv.org/abs/1612.03144
 
 在v3的论文里没有明确提所用的损失函数，我们可以从分析前者的版本和源码获知v3的损失函数形式。
 
-在v1中使用了一种叫sum-square error的损失计算方法，就是简单的差方相加而已。想详细了解的可以看我《[YOLOv1解析](https://zhuanlan.zhihu.com/p/564708049)》。在目标检测任务里，有几个关键信息是需要确定的: (x,y),(w,h),class,confidence 根据关键信息的特点可以分为上述四类，损失函数应该由各自特点确定。最后加到一起就可以组成最终的loss_function了，也就是一个loss_function搞定端到端的训练。可以从代码分析出v3的损失函数，同样也是对以上四类，不过相比于v1中简单的总方误差，还是有一些调整的：
+在v1中使用了一种叫sum-square error的损失计算方法，就是简单的差方相加而已。在目标检测任务里，有几个关键信息是需要确定的: (x,y),(w,h),class,confidence 根据关键信息的特点可以分为上述四类，损失函数应该由各自特点确定。最后加到一起就可以组成最终的loss_function了，也就是一个loss_function搞定端到端的训练。可以从代码分析出v3的损失函数，同样也是对以上四类，不过相比于v1中简单的总方误差，还是有一些调整的：
 
 ```python
 xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(raw_true_xy, raw_pred[..., 0:2],
@@ -199,14 +197,16 @@ loss += xy_loss + wh_loss + confidence_loss + class_loss
 在训练过程中对于每幅输入图像，YOLOv3会预测三个不同大小的3D tensor，对应着三个不同的scale，设计这三个scale的目的是为了能检测出不同大小的物体。 这里以13 * 13的tensor为例，对于这个scale,原始输入图像会被分割成13 × 13的grid cell，每个grid cell对应着3D tensor中的1x1x255这样一个长条形voxel。255是由3*(4+1+80)而来，由上图可知，公式 $N\times N\times [3\times (4+1+80)]$ 中 $N\times N$ 表示的是scale size例如上面提到的 $13\times13$ 。3表示的是each grid cell predict 3 boxes。4表示的是坐标值即 $(t_x,t_y,t_h,t_w)$ 。1表示的是置信度，80表示的是COCO类别数目。
 
 - 如果训练集中某一个ground truth对应的bounding box中心恰好落在了输入图像的某一个grid cell中，那么这个grid cell就负责预测此物体的bounding box,于是这个grid cell所对应的置信度为1，其他grid cell的置信度为0．每个grid cell都会被赋予3个不同大小的prior box，学习过程中，这个grid cell会学会如何选择哪个大小的prior box。作者定义的是**选择与ground truth的IOU重合度最高的prior box**。
-- 上面说到的三个预设的不同大小的prior box，这三个大小是如何计算的，首先在训练前，将COCO数据集中的所有bbox使用k-means clustering分成９个类别，每３个类别对应一个scale，故总共３个scale，这种关于box大小的先验信息帮助网络准确预测每个box的offset和coordinate。从直观上，大小合适的box会使得网络更精准的学习。（**详见《[YOLOv2解析](https://zhuanlan.zhihu.com/p/564732055)》中的2.4 Dimension Cluster**）
+- 上面说到的三个预设的不同大小的prior box，这三个大小是如何计算的，首先在训练前，将COCO数据集中的所有bbox使用k-means clustering分成９个类别，每３个类别对应一个scale，故总共３个scale，这种关于box大小的先验信息帮助网络准确预测每个box的offset和coordinate。从直观上，大小合适的box会使得网络更精准的学习。
 
-将图片输入训练好的预测网络，首先输出预测框的信息 $(obj,t_x,t_y,t_h,t_w,cls) $，每个预测框的$class-specific confidence score(conf_score=obj*cls)$ 以后，设置**阈值**，滤掉得分低的预测框，对保留的预测框进行**NMS处理**，就得到最终的检测结果。（**详见《[YOLOv1解析](https://zhuanlan.zhihu.com/p/564708049)》中的3. IOU和NMS处理流程**）
+将图片输入训练好的预测网络，首先输出预测框的信息 $(obj,t_x,t_y,t_h,t_w,cls) $，每个预测框的$class-specific confidence score(conf_score=obj*cls)$ 以后，设置**阈值**，滤掉得分低的预测框，对保留的预测框进行**NMS处理**，就得到最终的检测结果。
 
 - 阈值处理：去除掉大部分不含预测物体的背景框
 - NMS处理：去除掉多余的bounding box，防止重复预测同一物体
 
-总结预测流程就是：
+
+
+**总结预测流程就是**：
 
 然后再遍历三种尺度
 
