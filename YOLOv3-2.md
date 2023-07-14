@@ -54,15 +54,15 @@ YOLO每一代的提升很大一部分决定于backbone网络的提升，从v2的
 
 ### 3.1 多尺度预测
 
-在每个grid cell预先设定一组不同大小和宽高比的边框，来覆盖整个图像的不同位置和多种尺度。每种尺度预测3个box, anchor的设计方式仍然使用`聚类`（**详见[YOLOv2解析](https://zhuanlan.zhihu.com/p/564732055)中的2.2、2.3、2.4节**）,得到9个聚类中心,将其按照大小均分给3个尺度，**利用这三种尺度的特征层进行边框的预测**。
+在每个grid cell预先设定一组不同大小和宽高比的边框，来覆盖整个图像的不同位置和多种尺度。每种尺度预测3个box, anchor的设计方式仍然使用**聚类**（**详见[YOLOv2解析](https://zhuanlan.zhihu.com/p/564732055)中的2.2、2.3、2.4节**）,得到9个聚类中心,将其按照大小均分给3个尺度，**利用这三种尺度的特征层进行边框的预测**。
 
-![image-20230624213350985](./.assets/image-20230624213350985.png)
+<img src="./.assets/image-20230624213350985.png" alt="image-20230624213350985" style="zoom:50%;" />
 
 上图是YOLOv3 416模型进行绘制的，输入的尺寸是416x416，预测的三个特征层大小分别是13，26，52。其中Convolutional是指Conv2d + BN + Leaky-ReLU。
 
 将上图可视化：
 
-![image-20230624213527860](./.assets/image-20230624213527860.png)
+<img src="./.assets/image-20230624213527860.png" alt="image-20230624213527860" style="zoom:50%;" />
 
 上图三个蓝色方框内表示Yolov3的三个基本组件：
 
@@ -121,7 +121,7 @@ YOLO每一代的提升很大一部分决定于backbone网络的提升，从v2的
 
 - 第三步lateral connection：利用横向连接关系将第一步和第二步的结果merge到一起。因为每个stage输出的特征图之间是2倍关系，所以上一层上采样得到的特征图大小 $ P_{n + 1} $ 和本层的 $ C_{n} $ 的大小一样，就可以直接将对应的元素相加。
 
-    ![image-20230624223940481](./.assets/image-20230624223940481.png)
+    <img src="./.assets/image-20230624223940481.png" alt="image-20230624223940481" style="zoom:50%;" />
 
 - 第四步： 在merge得到的结果后面接一个 $ 3 \times 3 $ 的卷积来减轻上采样的混叠效应（混叠效应产生原因：插值生成的图像灰度不连续，在灰度变化的地方可能出现明显的锯齿状）
 
@@ -131,7 +131,7 @@ YOLO每一代的提升很大一部分决定于backbone网络的提升，从v2的
 
 ## 4. 新backbone——Darknet-53
 
-![image-20230624224148983](./.assets/image-20230624224148983.png)
+<img src="./.assets/image-20230624224148983.png" alt="image-20230624224148983" style="zoom:50%;" />
 
 上图是以输入图像 $ 256 \times 256 $ 进行预训练来进行介绍的，常用的尺寸是 $ 416 \times 416 $ ，都是32的倍数。这个网络主要是由一系列的1x1和3x3的卷积层组成（**每个卷积层后都会跟一个BN层和一个LeakyReLU层**），作者说因为网络中有53个convolutional layers，所以叫做Darknet-53（$ 2 + 1 \times 2 + 1 + 2 \times 2 + 1 + 8 \times 2 + 1 + 8 \times 2 + 1 + 4 \times 2 + 1 = 53$  按照顺序数，最后的Connected是全连接层也算卷积层，一共53个）
 
@@ -161,6 +161,7 @@ YOLO每一代的提升很大一部分决定于backbone网络的提升，从v2的
 在v3的论文里没有明确提所用的损失函数，我们可以从分析前者的版本和源码获知v3的损失函数形式。
 
 在v1中使用了一种叫sum-square error的损失计算方法，就是简单的差方相加而已。在目标检测任务里，有几个关键信息是需要确定的: (x,y),(w,h),class,confidence 根据关键信息的特点可以分为上述四类，损失函数应该由各自特点确定。最后加到一起就可以组成最终的loss_function了，也就是一个loss_function搞定端到端的训练。可以从代码分析出v3的损失函数，同样也是对以上四类，不过相比于v1中简单的总方误差，还是有一些调整的：
+
 
 ```python
 xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(raw_true_xy, raw_pred[..., 0:2],
@@ -219,3 +220,4 @@ $\rightarrow$ 将预测框的confidence与其80维的分类scores相乘
 $\rightarrow$ 设定nms_thresh和iou_thresh，使用nms和iou去除背景边框和重复边框
 
 $\rightarrow$ 遍历留下的每一个预测框，可视化
+

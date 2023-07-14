@@ -33,8 +33,8 @@
 
 - 查全率 $Recall = \frac{TP}{TP + FN} = \frac{TP}{all ground truths}$
 - TP: >0.5的检测框数量（同一Ground Truth只计算一次）
-- FP: IoU<=0.5的检测框，或者是检测到同一个GT的多余检测框的数量
-- FN: 没有检测到的GT（ground truths）的数量
+- FP: $ \text{IoU} \le 0.5$ 的检测框，或者是检测到同一个GT的多余检测框的数量
+- FN: 没有检测到的 GT（ground truths）的数量
 
 
 
@@ -120,7 +120,7 @@ $d(box, centroid) = 1 - IOU(box, centroid)$。centroid是聚类时被选作中�
 
 下图是在VOC和COCO数据集上的聚类分析结果，随着聚类中心数目的增加，平均IOU值（各个边界框与聚类中心的IOU的平均值）是增加的，但是综合考虑模型复杂度和召回率，作者最终选取5个聚类中心作为先验框，其相对于图片的大小如右边图所示。
 
-![image-20230624164316917](./.assets/image-20230624164316917.png)
+<img src="./.assets/image-20230624164316917.png" alt="image-20230624164316917" style="zoom:50%;" />
 
 对于两个数据集，5个先验框的width和height如下
 
@@ -159,7 +159,7 @@ b_y = \frac{\sigma(t_y)+c_y}{H} \\
 b_w = \frac{p_we^{t_w}}{W} \\ 
 b_ h= \frac{p_he^{t_h}}{H} \\
 $$
-![image-20230624181211209](./.assets/image-20230624181211209.png)
+<img src="./.assets/image-20230624181211209.png" alt="image-20230624181211209" style="zoom:50%;" />
 
 如果再将上面的4个值分别乘以图片的宽度和长度（像素点值）就可以得到边界框的最终位置和大小了。
 
@@ -173,11 +173,11 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpoo
 
 将高层的特征呢给到底层，这样的话高层也会获得底层的特征
 
-![image-20230624181640477](./.assets/image-20230624181640477.png)
+<img src="./.assets/image-20230624181640477.png" alt="image-20230624181640477" style="zoom:50%;" />
 
 一拆四的方法如下：
 
-![image-20230624181423953](./.assets/image-20230624181423953.png)
+<img src="./.assets/image-20230624181423953.png" alt="image-20230624181423953" style="zoom:50%;" />
 
 
 
@@ -189,11 +189,9 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpoo
 
 具体来讲，在训练网络时，每训练10个batch(在一个epoch 中，batch数和迭代数是相等的，例如500个样本为1batch，总样本2000，则一个epoch包含4个batch或者说4个iteration),**网络就会随机选择另一种size的输入**,然后只需要修改对最后检测层的处理就可以重新训练。也就是说downsample的factor是32，因此采用32的倍数作为输入的size:{320,352,…,608}。
 
-![image-20230624181902092](./.assets/image-20230624181902092.png)
+<img src="./.assets/image-20230624181902092.png" alt="image-20230624181902092" style="zoom:50%;" />
 
 **总结来看，虽然YOLOv2做了很多改进，但是大部分都是借鉴其它论文的一些技巧，如Faster R-CNN的anchor boxes，YOLOv2采用anchor boxes和卷积做预测，这基本上与SSD模型（单尺度特征图的SSD）非常类似了，而且SSD也是借鉴了Faster R-CNN的RPN网络。从某种意义上来说，YOLOv2和SSD这两个one-stage模型与RPN网络本质上无异，只不过RPN不做类别的预测，只是简单地区分物体与背景。在two-stage方法中，RPN起到的作用是给出region proposals，其实就是作出粗糙的检测，所以另外增加了一个stage，即采用R-CNN网络来进一步提升检测的准确度（包括给出类别预测）。而对于one-stage方法，它们想要一步到位，直接采用“RPN”网络作出精确的预测，要因此要在网络设计上做很多的tricks。YOLOv2的一大创新是采用Multi-Scale Training策略，这样同一个模型其实就可以适应多种大小的图片了。**
-
-
 
 
 
@@ -203,7 +201,7 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpoo
 
 在YOLO v1中，作者采用的训练网络是基于GooleNet,YOLOv2采用了一个新的基础模型（特征提取器），称为Darknet-19，包括19个卷积层和5个maxpooling层.
 
-![image-20230625151206958](./.assets/image-20230625151206958.png)
+<img src="./.assets/image-20230625151206958.png" alt="image-20230625151206958" style="zoom:50%;" />
 
 Darknet-19与VGG16模型设计原则是一致的，**主要采用 $ 3\times3 $ 卷积，采用  $ 2\times2 $ 的maxpooling层，特征图维度降低2倍，同时特征图的channles增加两倍**。与NIN类似，Darknet-19最终**采用global avgpooling做预测**，并且在 $  3\times3  $ 卷积之间使用  $ 1\times1  $ 卷积来压缩特征图channles以降低模型计算量和参数。Darknet-19**每个卷积层后面使用了batch norm层**以加快收敛速度，降低模型过拟合。
 
@@ -250,7 +248,7 @@ $$
 
 \left.+\lambda_{\text {class }} *\left(\sum_{c=1}^{c}\left(\text { truth }^{c}-b_{i j k}^{c}\right)^{2}\right)\right) 
 $$
-![image-20230625152807224](./.assets/image-20230625152807224.png)
+<img src="./.assets/image-20230625152807224.png" alt="image-20230625152807224" style="zoom:50%;" />
 
 
 

@@ -36,7 +36,7 @@
 ![image-20230625155346531](./.assets/image-20230625155346531.png)
 
 - 每个网格需要预测B个BBox的位置信息和confidence（置信度），一个BBox对于着**四个位置信息** $(x,y,w,h)$ **和一个confidence信息**。
-- 每个网格会预测出B个BBox的位置信息，每个BBox需要 $(x,y,w,h)$ 来表示其位置。其中 $(x, y)$ 是BBox中心点的位置，$ (w, h) $是BBox的宽和高，这是相对于整张图片的。$(x,y,w,h)$ 都要相对于单元格归一化到 0~1 之间。例如图片的宽为width,高为height，BBox中心落在的网格坐标为 $(x_0, y_0)$，则BBox的]实际坐标为
+- 每个网格会预测出B个BBox的位置信息，每个BBox需要 $(x,y,w,h)$ 来表示其位置。其中 $(x, y)$ 是BBox中心点的位置，$ (w, h) $ 是BBox的宽和高，这是相对于整张图片的。$(x,y,w,h)$ 都要相对于单元格归一化到 0~1 之间。例如图片的宽为width,高为height，BBox中心落在的网格坐标为 $(x_0, y_0)$，则BBox的实际坐标为
 
 $$
 \frac{x}{(Width / S)} - x_0 \\
@@ -64,8 +64,6 @@ Pr(class_i|object)*confidence=\\Pr(object)*IOU^{truth}_{pred}=Pr(class_i)*IOU^{t
 $$
 
 - 得到每个box的class-specific confidence score以后，设置**阈值**，滤掉得分低的BBox，对保留的BBox进行**NMS处理**，就得到最终的检测结果。阈值处理：去除掉大部分不含预测物体的背景框 NMS处理：去除掉多余的bounding box，防止重复预测同一物体。
-
-
 
 ![image-20230625162327874](./.assets/image-20230625162327874.png)
 
@@ -115,23 +113,15 @@ $$
 
 ### 4. 训练阶段（反向传播）
 
-
-
-
-
 以YOLOv1定义的网络参数进行说明，在PASCAL VOC中，图像输入为448x448，取S=7，B=2，一共有20个类别(C=20)。则输出就是7x7x30的一个tensor。整个网络结构如下图所示：
-
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='811' height='341'></svg>)
 
 借鉴了GoogleLeNet设计，共包含24个卷积层，2个全链接层（前20层中用1×1 reduction layers 紧跟 3×3 convolutional layers 取代GoogleLeNet的 inception modules）。
 
 每个单元格对应输出30维的向量，网格周边的信息也会被识别和整理，最后编码到那个30维向量中。
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='720' height='438'></svg>)
-
 **loss函数**——是通过ground truth和输出之间的sum-squared error进行计算的，所以相当于把分类问题也当成回归问题来计算loss
 $$
-\begin{gathered} \lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(x_{i}-\hat{x}_{i}\right)^{2}+\left(y_{i}-\hat{y}_{i}\right)^{2}\right] \\ +\lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(\sqrt{w_{i}}-\sqrt{\hat{w}_{i}}\right)^{2}+\left(\sqrt{h_{i}}-\sqrt{\hat{h}_{i}}\right)^{2}\right] \\ +\sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\ +\lambda_{\text {noobj }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {noobj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\ +\sum_{i=0}^{S^{2}} \mathbb{1}_{i}^{\text {obj }} \sum_{c \in \text { classes }}\left(p_{i}(c)-\hat{p}_{i}(c)\right)^{2} \end{gathered} \\
+\begin{gathered} \lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(x_{i}-\hat{x}_{i}\right)^{2}+\left(y_{i}-\hat{y}_{i}\right)^{2}\right] \\ +\lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(\sqrt{w_{i}}-\sqrt{\hat{w}_{i}}\right)^{2}+\left(\sqrt{h_{i}}-\sqrt{\hat{h}_{i}}\right)^{2}\right] \\ +\sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\ +\lambda_{\text {noobj }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {noobj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\ +\sum_{i=0}^{S^{2}} \mathbb{1}_{i}^{\text {obj }} \sum_{c\in\text{classes }}\left(p_{i}(c)-\hat{p}_{i}(c)\right)^{2} \end{gathered} \\
 $$
 
 
@@ -149,8 +139,6 @@ $$
 
 对不同大小的box预测中，相比于大box预测偏一点，小box预测偏一点肯定更不能被忍受的。所以采用 \sqrt{w} 和 \sqrt{h} ,以此减弱大小框的影响
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='720' height='460'></svg>)
-
 - 置信度误差
 
 分两种情况，一是有object的单元格的置信度计算，另一种是没有object的单元格的置信度计算。两种情况都是单元格中所有的BBox都参与计算。
@@ -163,19 +151,17 @@ $$
 
 当作回归误差来计算，使用sum-squared error来计算分类误差，需要注意的是**只有包含object的单元格才参与分类loss的计算**，即有object中心点落入的单元格才进行分类loss的计算，而这个单元格的ground truth label就是该物体的label。
 
-![img](data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='720' height='497'></svg>)
-
 总结起来就是：
 
 - 对于有object的cell，那么计算cell的分类误差，然后cell中两个BBox的置信度误差（$ \hat{C}i=1*IOU^{truth}{pred} $），然后cell中和ground truth box的IoU最大的BBox的位置误差。
 
 $$
-分类误差=\sum_{i=0}^{S^{2}} \mathbb{1}_{i}^{\text {obj }} \sum_{c \in \text { classes }}\left(p_{i}(c)-\hat{p}_{i}(c)\right)^{2} \\置信度误差= \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\
+分类误差=\sum_{i=0}^{S^{2}} \mathbb{1}_{i}^{\text {obj }} \sum_{c \in \text {classes }}\left(p_{i}(c)-\hat{p}_{i}(c)\right)^{2} \\置信度误差= \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\
 
 位置误差= \lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(x_{i}-\hat{x}_{i}\right)^{2}+\left(y_{i}-\hat{y}_{i}\right)^{2}\right] \\ +\lambda_{\text {coord }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {obj }}\left[\left(\sqrt{w_{i}}-\sqrt{\hat{w}_{i}}\right)^{2}+\left(\sqrt{h_{i}}-\sqrt{\hat{h}_{i}}\right)^{2}\right] \\ \\
 $$
 
-- 对于没有object的cell，那就只计算cell中两个BBox的置信度误差( $\hat{C}i=0*IOU^{truth}{pred}=0 $）。
+- 对于没有object的cell，那就只计算cell中两个BBox的置信度误差( $\hat{C}i=0 \times IOU^{truth}{pred}=0 $）。
 
 $$
 置信度误差=\lambda_{\text {noobj }} \sum_{i=0}^{S^{2}} \sum_{j=0}^{B} \mathbb{1}_{i j}^{\text {noobj }}\left(C_{i}-\hat{C}_{i}\right)^{2} \\

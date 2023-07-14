@@ -33,6 +33,12 @@ PASCAL VOC 2012有11530张图像，27450个标注，20个类别。
 - AP (Average Precision)
 - mAP (mean Average Precision)
 
+>F1分数（F1 Score）是用于评估二分类和多分类问题模型精确度的一个指标。它是精确度（Precision）和召回率（Recall）的调和平均，可以同时考虑模型的精确性和召回率。$F1 = 2 \times \frac{Precision \times Recall} {Precision + Recall}$
+>
+>P-R曲线（Precision-Recall Curve）是一种用于评估二分类问题和信息检索任务中模型效果的可视化工具。P-R曲线的横坐标是召回率（Recall），纵坐标是精确率（Precision）。P-R曲线下的面积（Area Under Curve，AUC）也被用来评估模型的性能，该值越大，说明模型的性能越好。
+
+
+
 ## 3.2 检测速度
 
 - 前传还是
