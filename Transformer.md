@@ -2,7 +2,7 @@
 
 Transformer是一种基于序列到序列（Sequence-to-Sequence）的模型，该模型在2017年首次被提出。与其他的Seq2Seq模型显著不同的特点在于，Transformer摒弃了传统的循环神经网络（RNN）和卷积神经网络（CNN），而是完全依赖于注意力机制来构建其网络架构。该模型在机器翻译、语音识别等领域有广泛的应用，并且在序列推荐等方面也有具体的使用案例。Transformer采用了编码器-解码器（Encoder-Decoder）的结构，由自注意力机制（Self-Attention）和前馈神经网络（Feed Forward）组成。其具体的结构在相关的论文中已经进行了详细的描述和展示。如下图
 
-<img src="./.assets/image-20230715102732340.png" alt="image-20230715102732340" style="zoom: 67%;" />
+<img src="./.assets/image-20230715102732340.png" alt="image-20230715102732340" style="zoom: 50%;" />
 
 由于注意力机制是整个网络的核心，因此我们首先对其进行解析。
 
@@ -57,7 +57,7 @@ $$
 $$
 论文中具体结构如下所示：
 
-![image-20230715142057806](./.assets/image-20230715142057806.png)
+<img src="./.assets/image-20230715142057806.png" alt="image-20230715142057806" style="zoom:50%;" />
 
 ### **多头注意力机制**
 
@@ -67,7 +67,7 @@ $$
 $$
 其中，$W_{i}^{Q} \in \mathbb{R}^{{N} \times d_{k}}, W_{i}^{K} \in \mathbb{R}^{{N } \times d_{k}}, W_{i}^{V} \in \mathbb{R}^{hd_k\times d_{model}}$ 为学习的参数矩阵, $d_{model}$ 为最后所需的维度。
 
-![image-20230715142431680](./.assets/image-20230715142431680.png)
+<img src="./.assets/image-20230715142431680.png" alt="image-20230715142431680" style="zoom:50%;" />
 
 ### **自注意力机制模型**
 
@@ -106,7 +106,7 @@ $N=2, D_x=3, D_v=3$, 自注意力机制如下所示：
 
 论文中，Transformer内部具体使用的是一个**「多头自注意力机制」**，即多头注意力机制的概念+自注意力机制：
 
-<img src="./.assets/image-20230715143941905.png" alt="image-20230715143941905" style="zoom: 67%;" />
+<img src="./.assets/image-20230715143941905.png" alt="image-20230715143941905" style="zoom: 50%;" />
 
 以上便是注意力机制的所有内容。
 
@@ -114,11 +114,11 @@ $N=2, D_x=3, D_v=3$, 自注意力机制如下所示：
 
 Transformer是一个Encoder-Decoder结构。
 
-<img src="./.assets/image-20230715144013745.png" alt="image-20230715144013745" style="zoom: 80%;" />
+<img src="./.assets/image-20230715144013745.png" alt="image-20230715144013745" style="zoom: 50%;" />
 
 论文中提到，Transformer的编码层由6个相同的层（dentical layers）堆叠而成，解码层同样由6个相同的层堆叠而成，如下所示：
 
-<img src="./.assets/image-20230715144033802.png" alt="image-20230715144033802" style="zoom:50%;" />
+<img src="./.assets/image-20230715144033802.png" alt="image-20230715144033802" style="zoom: 33%;" />
 
 ### **编码层**
 
@@ -126,7 +126,7 @@ Transformer是一个Encoder-Decoder结构。
 
 编码层由六个相同的层构成，而每一个又则由两个子层构成：第一个便是上述提到的**「多头自注意力机制层」**，第二个便是简单的**「全连接的前向网络」**，如下所示：
 
-<img src="./.assets/image-20230715144049760.png" alt="image-20230715144049760" style="zoom:80%;" />
+<img src="./.assets/image-20230715144049760.png" alt="image-20230715144049760" style="zoom: 50%;" />
 
 **「全连接网络：」**
 
@@ -140,17 +140,17 @@ $$
 
 观察论文给出的整体模型，我们发现在每一层中，还引入了一个**「残差连接」**（residual connection），之后通过了一个**「层的Normalization」**。最终编码层每一层的结构如下：
 
-<img src="./.assets/image-20230715144138582.png" alt="image-20230715144138582" style="zoom:80%;" />
+<img src="./.assets/image-20230715144138582.png" alt="image-20230715144138582" style="zoom: 50%;" />
 
 ### **解码层**
 
 解码层也是与编码层一样，具有相同的6层。但每一层的结构却与编码层不一样，是由三个子层所构成：**「多头自注意力机制层、Encoder-Decoder的注意力层和全联接的前向网络层」**。相比于编码层，Encoder-Decoder的注意力层主要是为了关注输入的相关部分。
 
-![image-20230715144256817](./.assets/image-20230715144256817.png)
+<img src="./.assets/image-20230715144256817.png" alt="image-20230715144256817" style="zoom:50%;" />
 
 在解码层，我们重点应该关注的是**Encoder-Decoder Attention**。
 
-![image-20230715144331935](./.assets/image-20230715144331935.png)
+<img src="./.assets/image-20230715144331935.png" alt="image-20230715144331935" style="zoom:50%;" />
 
 通过模型结构图，**「发现编码层最后的输出作为了中间层的两个输入（Key-Value）」**，而在**「第一个子层多头自注意力机制的输出作为Query」**。该部分就是编码层与解码层的**「本质区别」**。
 
@@ -158,7 +158,7 @@ $$
 
 因此两者的总体结构为：
 
-<img src="./.assets/image-20230715144359751.png" alt="image-20230715144359751" style="zoom: 67%;" />
+<img src="./.assets/image-20230715144359751.png" alt="image-20230715144359751" style="zoom: 50%;" />
 
 ### **Positional Encoding**
 
@@ -176,7 +176,7 @@ $$
 $$
 其中 $PE_{(pos, 2i)}$ 表示第 $pos$ 位置的编码向量的第 $2i$ 维，$D$ 表示编码向量的维度。
 
-<img src="./.assets/image-20230715144903134.png" alt="image-20230715144903134" style="zoom:67%;" />
+<img src="./.assets/image-20230715144903134.png" alt="image-20230715144903134" style="zoom: 33%;" />
 
 ### **具体参数**
 
