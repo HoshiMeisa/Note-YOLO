@@ -6,13 +6,13 @@
 
 - 可以对视频进行实时检测，应用领域广
 
-    ![image-20230621144219581](../.assets/image-20230621144219581.png)
+    <img src="../.assets/image-20230621144219581.png" alt="image-20230621144219581" style="zoom: 33%;" />
 
 
 
 ## 核心思想
 
-![image-20230621144241211](../.assets/image-20230621144241211.png)
+<img src="../.assets/image-20230621144241211.png" alt="image-20230621144241211" style="zoom:50%;" />
 
 - 首先，对于 $$s \times s$$ 的输入，将其分成多个网格
 - 每个网格预测它所代表的物体 
@@ -31,7 +31,7 @@
 
 ## 网络架构
 
-![image-20230621201230664](../.assets/image-20230621201230664.png)
+<img src="../.assets/image-20230621201230664.png" alt="image-20230621201230664" style="zoom:50%;" />
 
 >  最后输出的大小是 $$7 \times 7 \times 30$$，其中的含义：
 >
@@ -49,7 +49,7 @@
 >
 >  至于如何实现这样的输出，是由神经网络在学习过程中逐渐学会这样的规则  。
 
-![image-20230621203413311](../.assets/image-20230621203413311.png)
+<img src="../.assets/image-20230621203413311.png" alt="image-20230621203413311" style="zoom: 33%;" />
 
 - **$$(x, y)$$ 是BBox的中心相对于对于单元格的offset**
 
@@ -62,7 +62,7 @@ $x = \frac{x_{c}}{w_i}S - x_{col}, \ y = \frac{y_c}{h_i}S - y_{row}$
 -  $ S $ 是YOLO模型将图像划分的网格的大小，即图像被划分成了 $ S \times S $ 个网格。
 -  $ x_{col} $ 和 $ y_{row} $ 是指当前网格在网格系统中的列索引和行索引（索引从0开始）。
 
-![image-20230624155703465](../.assets/image-20230624155703465.png)
+<img src="../.assets/image-20230624155703465.png" alt="image-20230624155703465" style="zoom: 33%;" />
 
 - **$(w, h)$ 是BBox相对于整个图片的比例**
 
@@ -88,7 +88,7 @@ $P_r(Class_i\ |\ Object) \times P_r(Object) \times IOU_{pred}^{truth} = P_r(Clas
 
 ## 损失函数
 
-![image-20230621204557184](../.assets/image-20230621204557184.png)
+<img src="../.assets/image-20230621204557184.png" alt="image-20230621204557184" style="zoom: 50%;" />
 
 
 
@@ -96,7 +96,7 @@ $P_r(Class_i\ |\ Object) \times P_r(Object) \times IOU_{pred}^{truth} = P_r(Clas
 
 有重叠的检测框时使用最大值
 
-![image-20230622104350291](../.assets/image-20230622104350291.png)
+<img src="../.assets/image-20230622104350291.png" alt="image-20230622104350291" style="zoom:50%;" />
 
 
 

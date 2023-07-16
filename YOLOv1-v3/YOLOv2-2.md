@@ -1,52 +1,47 @@
 # YOLOv2
 
 
-## 1. 前言
+## 1 前言
 
 作者首先在YOLOv1的基础上提出了改进的YOLOv2，然后提出了一种**检测与分类联合训练**方法，使用这种联合训练方法在COCO检测数据集和ImageNet分类数据集上训练出了YOLO9000模型，其可以检测超过9000多类物体。所以，这篇文章其实包含两个模型：YOLOv2和YOLO9000，不过后者是在前者基础上提出的，两者模型主体结构是一致的。YOLOv2相比YOLOv1做了很多方面的改进，这也使得YOLOv2的mAP有显著的提升，并且YOLOv2的速度依然很快，保持着自己作为one-stage方法的优势。
 
 **YOLOv1算法缺点：**
 
 1. 在物体定位方面（localization）不够准确
-
 2. 难以找到图片中的所有物体，召回率（recall）较低
-
 3. 检测小目标和密集目标性能比较差
-
-4. 虽然速度快，但是map准确度比较低
+4. 虽然速度快，但是mAP比较低，扔落后于SOTA模型
 
 进行改进的策略如下:
 
-![image-20230624162845400](../.assets/image-20230624162845400.png)
+<img src="../.assets/image-20230624162845400.png" alt="image-20230624162845400" style="zoom: 67%;" />
 
-**注：mAP定义**
+**注：关键词定义如下**
 
 - mAP：mean Average Precision, 即各类别AP的平均值
 - AP：PR曲线下面积
 - PR曲线：Precision-Recall曲线
-- Precision：在所有生成的检测框之中，真正正确的检测框数量（TP）的比例
-- Recall：在所有真正的检测框中（ground truths），被找到的比例
+- Precision：准确率（查准率）。在所有生成的检测框之中，真正正确的检测框数量（TP）的比例
+- Recall：召回率（查全率）。在所有真正的检测框中（ground truths），检测到的比例
 
-![image-20230624162915390](../.assets/image-20230624162915390.png)
+<img src="../.assets/image-20230624162915390.png" alt="image-20230624162915390" style="zoom:50%;" />
 
-- 查准率 $Precision = \frac{TP}{TP+FP} = \frac{TP}{all detections}$
+- 查准率的计算 $Precision = \frac{TP}{TP+FP} = \frac{TP}{all detections}$
 
-- 查全率 $Recall = \frac{TP}{TP + FN} = \frac{TP}{all ground truths}$
-- TP: >0.5的检测框数量（同一Ground Truth只计算一次）
+- 查全率的计算 $Recall = \frac{TP}{TP + FN} = \frac{TP}{all ground truths}$
+- TP: >0.5 的检测框数量（同一Ground Truth只计算一次）
 - FP: $ \text{IoU} \le 0.5$ 的检测框，或者是检测到同一个GT的多余检测框的数量
 - FN: 没有检测到的 GT（ground truths）的数量
 
 
 
-## 2. Better
+## 2 Better
 
 ### 2.1 Batch Normalization
 
-BN层就是对网络的每一层的输入进行归一化，使得网络不需要去学数据分布，加快了收敛速度，而且可以起到一定正则化效果，降低模型的过拟合。在YOLOv2中，**每个卷积层后面添加了Batch Normalization层**，不再使用dropout。
+BN层就是对网络的每一层的输入进行归一化，使得网络不需要去学数据分布，加快了收敛速度，而且可以起到一定正则化效果，降低模型的过拟合。在YOLOv2中，**每个卷积层后面添加了Batch Normalization层**，不再使用Dropout。实验证明添加了BN层可以提高2%的mAP。
 
-实验证明添加了BN层可以提高2%的mAP。
-
-![image-20230625175251701](../.assets/image-20230625175251701.png)
+<img src="../.assets/image-20230625175251701.png" alt="image-20230625175251701" style="zoom:50%;" />
 
 BN大体可以分为四步： 
 
@@ -68,18 +63,18 @@ $$
 
 y_i \gets \gamma \hat{x_i} + \beta \equiv BN_{\gamma,\beta}(x_i)
 $$
-源码实现: 
+伪代码实现: 
 
 ```python
-m = K.mean(X, axis=-1, keepdims=True)	#计算均值  
-std = K.std(X, axis=-1, keepdims=True)	#计算标准差  
+m = K.mean(X, axis=-1, keepdims=True)		#计算均值  
+std = K.std(X, axis=-1, keepdims=True)		#计算标准差  
 X_normed = (X - m) / (std + self.epsilon)	#归一化  
-out = self.gamma * X_normed + self.beta	#重构变换
+out = self.gamma * X_normed + self.beta		#重构变换
 ```
 
 BN之后的效果
 
-<img src="../.assets/image-20230624163530164.png" alt="image-20230624163530164" style="zoom:80%;" />
+<img src="../.assets/image-20230624163530164.png" alt="image-20230624163530164" style="zoom: 33%;" />
 
 经过BN之后，原本很分散的数据都集中到了0附近，对于双曲正切函数Tanh来说在0附近有较大得梯度。 
 
@@ -195,7 +190,7 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ maxpoo
 
 
 
-## 3.Faster
+## 3 Faster
 
 ### 3.1 New Network:Darknet-19
 
@@ -266,7 +261,7 @@ $$
 
 
 
-## 4.Stronger
+## 4 Stronger
 
 ### 4.1 Hierarchical classification（分层分类）
 
