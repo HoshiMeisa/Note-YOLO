@@ -21,9 +21,9 @@
 
 <img src="./.assets/image-20230716150944463.png" alt="image-20230716150944463" style="zoom: 33%;" />
 
-目前主流two-stage检测器的主要架构
+目前主流的two-stage检测器的使用的改进方法
 
-- **Input部分：**Image，Patches，Images Pyramid(图像金字塔)
+- **Input部分：**Image，Patches，Images Pyramid (图像金字塔)
 
 - **Backbone部分**：VGG16，ResNet-50，SpineNet，EfficientNet-B0 / B7，CSPResNeXt50，CSPDarknet53
 
@@ -34,27 +34,25 @@
 
 - **Heads部分：**
 
-- - **Dense Predictions**(one-stage)：
+- - **Dense Predictions** (one-stage)：
 
     - - RPN，SSD，YOLO，RetinaNet （anchor-based）
         - CornerNet，CenterNet，MatrixNet，FCOS（anchor-free）
 
-    - **Sparse Predictions**(two-stages)：
+    - **Sparse Predictions** (two-stages)：
 
     - - Faster R-CNN，R-FCN，Mask R-CNN（anchor-based）
         - RepPoints（anchor-free）
 
-下图为 YOLOv4 网络结构的采用的算法，其中保留了**YOLOv3的head部分，修改了主干网络为CSPDarknet-53，同时采用了SPP（空间金字塔池化）的思想来扩大感受野，PANet作为neck部分。**
+下图为 YOLOv4 网络结构的采用的算法，其中保留了**YOLOv3的head部分，修改了主干网络为CSPDarknet-53，同时采用了SPP（空间金字塔池化）的思想来扩大感受野，PANet作为neck部分。**<img src="./.assets/YOLOv4arch.png" style="zoom: 50%;" />
 
-<img src="./.assets/image-20230716151157642.png" alt="image-20230716151157642" style="zoom: 33%;" />
-
-<img src="./.assets/image-20230716151223171.png" alt="image-20230716151223171" style="zoom: 50%;" />
-
-
+<img src="./.assets/YOLOv4used.png" style="zoom: 50%;" />
 
 # 3 **算法改进相关释义**
 
-## 3.1 **BoF（Bag of Freebies）**
+## 3.1 **BoF**
+
+Bag of Freebies
 
 在文中是指那些**能够提高精度而不增加推理时间**的技术。
 
@@ -66,7 +64,9 @@
 
 
 
-## **3.2 BoS**（bag of specials）
+## **3.2 BoS**
+
+Bag of Specials
 
 是指那些**增加稍许推断代价，但可以提高模型精度**的方法。
 
