@@ -1,1 +1,0 @@
-/home/kana/YOLO/README.md
