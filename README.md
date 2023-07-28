@@ -10,8 +10,5 @@ Please note that GitHub might not display some pictures and $\LaTeX$ formulas co
 |     DBB      |        1.79         |           4.2           |  0.75241  | 0.68717 |        0.47847        |      0.74421       |
 | EfficientViT |        3.04         |           6.0           |  0.76525  | 0.70988 |        0.51296        |      0.76574       |
 |     SIoU     |                     |                         |           |         |                       |                    |
-|     GFPN     |                     |                         |           |         |                       |                    |
-|   RIFormer   |                     |                         |           |         |                       |                    |
 |     RFEM     |                     |                         |           |         |                       |                    |
 |     SAC      |                     |                         |           |         |                       |                    |
-|              |                     |                         |           |         |                       |                    |
