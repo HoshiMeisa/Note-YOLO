@@ -1,4 +1,4 @@
-# 前言
+# Transformer
 
 Transformer由论文 [*Attention is All You Need*](https://arxiv.org/pdf/1706.03762.pdf) 提出，现在是谷歌云TPU推荐的参考模型。论文相关的Tensorflow的代码可以从GitHub获取，其作为Tensor2Tensor包的一部分。哈佛的NLP团队也实现了一个基于PyTorch的版本，并注释该论文。
 

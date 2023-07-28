@@ -4,7 +4,7 @@
 
 
 
-YOLOv8相较于v5所做的改进：
+YOLOv8所做的改进：
 
 - **Backbone**：使用的依旧是CSP的思想，不过YOLOv5中的C3模块被替换成了C2f模块，实现了进一步的轻量化，同时YOLOv8依旧使用了YOLOv5等架构中使用的SPPF模块；
 

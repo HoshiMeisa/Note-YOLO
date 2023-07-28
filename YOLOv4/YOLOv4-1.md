@@ -36,13 +36,12 @@
 
 - - **Dense Predictions** (one-stage)：
 
-    - - RPN，SSD，YOLO，RetinaNet （anchor-based）
-        - CornerNet，CenterNet，MatrixNet，FCOS（anchor-free）
+    - RPN，SSD，YOLO，RetinaNet （anchor-based）
+      - CornerNet，CenterNet，MatrixNet，FCOS（anchor-free）
 
     - **Sparse Predictions** (two-stages)：
-
-    - - Faster R-CNN，R-FCN，Mask R-CNN（anchor-based）
-        - RepPoints（anchor-free）
+      - Faster R-CNN，R-FCN，Mask R-CNN（anchor-based）RepPoints（anchor-free）
+    
 
 下图为 YOLOv4 网络结构的采用的算法，其中保留了**YOLOv3的head部分，修改了主干网络为CSPDarknet-53，同时采用了SPP（空间金字塔池化）的思想来扩大感受野，PANet作为neck部分。**<img src="./.assets/YOLOv4arch.png" style="zoom: 50%;" />
 
@@ -117,12 +116,10 @@ Attention机制中的CBAM, CBAM含有空间注意力机制和通道注意力机�
 
 ## **3.7 PANet**
 
-PANet融合的时候使用的方法是Addition, 详解见：[CVPR 2018 PANet](https://link.zhihu.com/?target=https%3A//mp.weixin.qq.com/s%3F__biz%3DMzA4MjY4NTk0NQ%3D%3D%26mid%3D2247485145%26idx%3D2%26sn%3Ddbd970411f3ec2da25bf432af8400a74%26chksm%3D9f80bc4fa8f7355924af4aec888671a31a499684aa5e4e86b4c502b7f28f2521040d7507b980%26scene%3D21%23wechat_redirect)
+PANet融合的时候使用的方法是Addition.
 
 YOLOv4算法将融合的方法由add变为concat。
 
 <img src="./.assets/image-20230716151737109.png" alt="image-20230716151737109" style="zoom:50%;" />
 
 
-
-- 
