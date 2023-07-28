@@ -222,7 +222,7 @@ Softmax 根据输出矩阵的每一行预测下一个单词：
 
 
 
-# 6 Transformer 总结
+# 6 总结
 
 - Transformer 与 RNN 不同，可以比较好地并行训练。
 - Transformer 本身是不能利用单词的顺序信息的，因此需要在输入中添加位置 Embedding，否则 Transformer 就是一个词袋模型了。

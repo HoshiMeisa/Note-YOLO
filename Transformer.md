@@ -29,7 +29,7 @@ $\alpha_{n}$ 称为**「注意力分布」**，也可以说是在给定任务相
 
 其中 $\textbf{W, U, v}$ 为可学习的参数，$\textbf{D}$ 为输入向量的维度。
 
-在Transformer中，注意力打分函数选择**「缩放点积模型」**。文章先解释了使用点击模型的**「原因」**：
+在Transformer中，注意力打分函数选择**「缩放点积模型」**。论文先解释了使用点击模型的**「原因」**：
 
 > Additive attention computes the compatibility function using a feed-forward network with a single hidden layer. While the two are similar in theoretical complexity, dot-product attention is much faster and more space-efﬁcient in practice, since it can be implemented using highly optimized matrix multiplication code.
 
@@ -39,7 +39,7 @@ $\alpha_{n}$ 称为**「注意力分布」**，也可以说是在给定任务相
 
 > We suspect that for large values of $d_k$ , the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients. To counteract this effect, we scale the dot products by $\frac{1}{d_k}$.
 
-**「加权平均：」**
+**「加权平均」**
 
 使用加权平均对所有的输入信息进行汇总：
 $$
@@ -71,7 +71,7 @@ $$
 
 ### **自注意力机制模型**
 
-**「引入自注意力机制的原因：」**
+**「引入自注意力机制的原因」**
 
 神经网络处理一个变长的向量序列时，通常可以使用CNN或RNN编码得到一个相同长度的向量输出序列。但CNN与RNN都是一种局部编码方式，只建模了输入信息的局部依赖关系。RNN由于信息传递的容量以及梯度消失问题，实际也只能建立短距离依赖关系。
 
@@ -122,13 +122,13 @@ Transformer是一个Encoder-Decoder结构。
 
 ### **编码层**
 
-**「总体结构：」**
+**「总体结构」**
 
 编码层由六个相同的层构成，而每一个又则由两个子层构成：第一个便是上述提到的**「多头自注意力机制层」**，第二个便是简单的**「全连接的前向网络」**，如下所示：
 
 <img src="./.assets/image-20230715144049760.png" alt="image-20230715144049760" style="zoom: 50%;" />
 
-**「全连接网络：」**
+**「全连接网络」**
 
 多头自注意力机制在Attention部分已经提到，而全连接网络部分比较简单，即有两个带有Relu激活函数的线性转换构成：
 $$
@@ -136,9 +136,9 @@ FNN(x)=max(0,xW_1+b_1)W_2+b_2 \\
 $$
 其中 $x$ 为自注意力层的输出。
 
-**「残差连接：」**
+**「残差连接」**
 
-观察论文给出的整体模型，我们发现在每一层中，还引入了一个**「残差连接」**（residual connection），之后通过了一个**「层的Normalization」**。最终编码层每一层的结构如下：
+观察论文给出的整体模型，我们发现在每一层中，还引入了一个**「残差连接」**（residual connection），之后通过了一个**「LayerNormalization」**。最终编码层每一层的结构如下：
 
 <img src="./.assets/image-20230715144138582.png" alt="image-20230715144138582" style="zoom: 50%;" />
 

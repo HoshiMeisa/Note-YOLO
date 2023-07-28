@@ -1,9 +1,9 @@
 # YOLOv2
 
 
-## 1 前言
+## 1 背景
 
-作者首先在YOLOv1的基础上提出了改进的YOLOv2，然后提出了一种**检测与分类联合训练**方法，使用这种联合训练方法在COCO检测数据集和ImageNet分类数据集上训练出了YOLO9000模型，其可以检测超过9000多类物体。所以，这篇文章其实包含两个模型：YOLOv2和YOLO9000，不过后者是在前者基础上提出的，两者模型主体结构是一致的。YOLOv2相比YOLOv1做了很多方面的改进，这也使得YOLOv2的mAP有显著的提升，并且YOLOv2的速度依然很快，保持着自己作为one-stage方法的优势。
+作者首先在YOLOv1的基础上提出了改进的YOLOv2，然后提出了一种**检测与分类联合训练**方法，使用这种联合训练方法在COCO检测数据集和ImageNet分类数据集上训练出了YOLOv2模型，其可以检测超过v2多类物体。所以，这篇文章其实包含两个模型：YOLOv2和YOLOv2，不过后者是在前者基础上提出的，两者模型主体结构是一致的。YOLOv2相比YOLOv1做了很多方面的改进，这也使得YOLOv2的mAP有显著的提升，并且YOLOv2的速度依然很快，保持着自己作为one-stage方法的优势。
 
 **YOLOv1算法缺点：**
 
@@ -127,7 +127,7 @@ $d(box, centroid) = 1 - IoU(box, centroid)$。centroid是聚类时被选作中�
 
 
 
-### 2.5 Direct location prediction
+### 2.5 Direct Location Prediction
 
 引入anchor box的时候遇到的第二个问题：模型不稳定，尤其是在训练刚开始的时候。其位置预测公式为： 
 $$
@@ -194,9 +194,9 @@ YOLOv2的输入图片大小是 $416 \times 416$，经过5次 $2 \times 2$ 的max
 
 ## 3 Faster
 
-### 3.1 New Network : Darknet-19
+### 3.1 New Backbone : Darknet-19
 
-在YOLOv1中，作者采用的训练网络是基于GooLeNet，YOLOv2采用了一个新的基础模型（特征提取器），称为Darknet-19，同时也是作者自己使用C和CUDA写的神经网络框架，其中包括19个卷积层和5个maxpooling层。
+在YOLOv1中，作者采用的训练网络是基于GooLeNet，YOLOv2采用了一个新的backbone，称为Darknet-19，同时也是作者自己使用C和CUDA写的神经网络框架，其中包括19个卷积层和5个maxpooling层。
 
 <img src="../.assets/image-20230625151206958.png" alt="image-20230625151206958" style="zoom:50%;" />
 
@@ -206,7 +206,7 @@ Darknet-19与VGG16模型设计原则是一致的，**主要采用 $ 3\times3 $ �
 
 ### 3.2 Training for Classification
 
-这里的training for classification都是在ImageNet上进行预训练，主要分两步：
+这里的Training for Classification都是在ImageNet上进行预训练，主要分两步：
 
 **1、从头开始训练Darknet-19，数据集是ImageNet，训练160个epoch，输入图像的大小是 $224 \times 224$ ，初始学习率为0.1**。另外在训练的时候采用了标准的数据增强方式比如随机裁剪，旋转以及色度，亮度的调整等。
 
@@ -251,7 +251,7 @@ $$
 
 ### 3.5 YOLOv2训练过程
 
-此处再补充一下YOLOv2的训练过程（主要分为三个阶段）：
+YOLOv2的训练过程, 主要分为三个阶段 ：
 
 - 第一阶段：在ImageNet分类数据集上预训练Darknet-19，此时模型输入为 $224 \times 224$ ，共训练160个epochs
 - 第二阶段：将模型的输入调整为 $448 \times 448$，继续在ImageNet数据集上finetune分类模型，训练10个epochs
@@ -267,7 +267,7 @@ $$
 
 作者通过ImageNet训练分类、COCO和VOC数据集来训练检测，这是一个很有价值的思路，可以让我们达到比较优的效果。 通过将两个数据集混合训练，**如果遇到来自分类集的图片则只计算分类的Loss，遇到来自检测集的图片则计算完整的Loss。**
 
-但是ImageNet对应分类有9000种，而COCO则只提供80种目标检测，不能简单的合并检测数据集和分类数据集，因为Softmax对于所有的分类类别是互斥的。如果合并后数据集中有相似的类别，比如熊和美洲黑熊，就无法很好的完成任务。
+但是ImageNet对应分类有v2种，而COCO则只提供80种目标检测，不能简单的合并检测数据集和分类数据集，因为Softmax对于所有的分类类别是互斥的。如果合并后数据集中有相似的类别，比如熊和美洲黑熊，就无法很好的完成任务。
 
 <img src="../.assets/image-20230625185148661.png" alt="image-20230625185148661" style="zoom:50%;" />
 
@@ -277,3 +277,24 @@ $$
 
 <img src="../.assets/image-20230625185440595.png" alt="image-20230625185440595" style="zoom:50%;" />
 
+### 4.2 概率计算
+
+分类时的概率计算借用了决策树思想，**某个节点的概率值等于该节点到根节点的所有条件概率之积**。最终结果是一颗 WordTree （视觉名词组成的层次结构模型）。用WordTree执行分类时，预测每个节点的条件概率。如果想求得特定节点的绝对概率，只需要沿着路径做连续乘积。例如，如果想知道一张图片是不是“Norfolk terrier ”需要计算：
+
+<img src="./.assets/image-20230728095820594.png" alt="image-20230728095820594" style="zoom:50%;" />
+
+另外，为了验证这种方法作者在WordTree（用1000类别的ImageNet创建）上训练了Darknet-19模型。为了创建WordTree1k，作者添加了很多中间节点，把标签由1000扩展到1369。训练过程中ground truth标签要顺着向根节点的路径传播。例如，如果一张图片被标记为“Norfolk terrier”，它也被标记为“dog” 和“mammal”等。为了计算条件概率，模型预测了一个包含1369个元素的向量，而且**基于所有“同义词集”计算softmax**，其中“同义词集”是同一概念的下位词。
+
+softmax操作也同时应该采用分组操作，下图上半部分为ImageNet对应的原生Softmax，下半部分对应基于WordTree的Softmax：
+
+<img src="./.assets/image-20230728095839938.png" alt="image-20230728095839938" style="zoom:50%;" />
+
+通过上述方案构造WordTree，得到对应9418个分类，通过重采样保证Imagenet和COCO的样本数据比例为4:1。
+
+### 4.3 YOLOv2训练
+
+前面介绍完了如何融合分类和检测的数据集，接下来就是训练的问题了，文中采用的是Joint classification and detection，原文表述如下：
+
+> During training we mix images from both detection and classification datasets. When our network sees an image labelled for detection we can backpropagate based on the full YOLOv2 loss function. When it sees a classification image we only backpropagate loss from the classification specific parts of the architecture.
+
+这个Joint classification and detection的直观解释就是：**如果遇到来自分类集的图片则只计算分类的Loss，遇到来自检测集的图片则计算完整的Loss。** 另外YOLOv2的主网络基本和YOLOv2类似，只不过每个grid cell只采用3个box prior。
