@@ -101,3 +101,16 @@ Yolov5现在的Neck和Yolov4中一样，都采用FPN+PAN的结构，但在Yolov5
 
 <img src="./.assets/image-20230720094014815.png" alt="image-20230720094014815" style="zoom: 50%;" />
 
+Yolov4的Neck结构中，采用的都是普通的卷积操作。而Yolov5的Neck结构中，采用借鉴CSPnet设计的CSP2结构，加强网络特征融合的能力。
+
+<img src="./.assets/image-20230730143334134.png" alt="image-20230730143334134" style="zoom: 33%;" />
+
+### 3.2.5 输出端
+
+（1）计算损失损失函数
+
+其中计算bbox loss的部分更新，新版为：
+
+<img src="./.assets/image-20230730143836512.png" alt="image-20230730143836512" style="zoom:50%;" />
+
+（2）NMS非极大值抑制
