@@ -6,22 +6,50 @@
 
 在YOLO问世之前，目标检测方法都是基于区域卷积神经网络R-CNN，基本思路都是
 
-1. 提取物体区域 (Region proposal) 
+1. 提取物体区域 (Region Proposal) 
 2. 对区域进行分类识别 (Classification) 
 
 下面根据时间顺序简要地介绍一下R-CNN系列的目标检测方法。
 
 ## 1.1 R-CNN (Regions with CNN)
 
+### 1.1.1 简介
+
 RCNN是一种物体检测算法，它可以对一张图片中的物体进行定位和识别。RCNN的主要思想是：先对输入图片进行区域提取，然后对每个区域进行特征提取和分类。
 
 算法步骤如下：
 
-1. 用**选择性搜索** (Selective Search) 从图片中提取出2000个左右的**候选区域**。
-2. 将每个候选区域缩放 (warp) 到相同的 $227 \times 227$ 大小 227 (由于R-CNN的特征提取网络是CNN，其输入要求图片尺寸相同) ，并输入到特征提取CNN网络。
-3. 将CNN的输出作为特征，并将此特征输入到**SVM进行分类 (N + 1个二分类SVM) **，对于属于某个类别的候选区域，使用bounding box回归更加精细地调整候选区域的位置 (每个类别一个回归器 ) 
+1. 用**选择性搜索 (Selective Search)** 从图片中提取出2000个左右的**候选区域 (Region Proposal)**。
+2. 将每个候选区域缩放 (Warp) 到相同的 $227 \times 227$ 大小 (由于R-CNN的特征提取网络是CNN，其输入要求图片尺寸相同) ，并输入到特征提取CNN网络，提取固定尺寸的特征向量。
+3. 将CNN的输出作为特征，并将此特征输入到**SVM进行分类 (N + 1个二分类SVM) **，对于属于某个类别的候选区域，使用Bounding Box回归可以显著减小定位误差，更加精细地调整候选区域的位置。(对于每个类别，都有一个回归器 ) 
 
-输出共有 N + 1个类别，N类正样本，1类负样本，这个负样本是指bounding box定位失败，与ground truth的IoU小于0.5。
+输出共有 N + 1 个类别，N类正样本，1类负样本，这个负样本是指Bounding Box定位失败，与Ground Truth的IoU小于0.5。
+
+### 1.1.2 网络结构
+
+#### 特征提取CNN
+
+R-CNN直接使用了AlexNet作为特征提取网络。
+
+<img src="/home/kana/.config/Typora/typora-user-images/image-20230801211450191.png" alt="image-20230801211450191" style="zoom: 67%;" />
+
+### 1.1.3 附录
+
+#### Precision-Recall Curve的绘制方法
+
+按照检测出的矩形框的置信度从高到低进行排序，然后计算累积的 TP 和 FP 数量并计算出 Precision 与 Recall (注意此处计算的是 TP/All Ground-Truths)，如下表：
+
+<img src="/home/kana/.config/Typora/typora-user-images/image-20230801211821436.png" alt="image-20230801211821436" style="zoom: 67%;" />
+
+以R为横坐标，P为纵坐标将点绘制在坐标系中，
+
+<img src="/home/kana/.config/Typora/typora-user-images/image-20230801211954101.png" alt="image-20230801211954101" style="zoom:67%;" />
+
+绘制完成后，接着绘制插值 Precision 与 AUC (曲线下面积，Area Under Curve) , 
+
+<img src="/home/kana/.config/Typora/typora-user-images/image-20230801212110906.png" alt="image-20230801212110906" style="zoom:50%;" />
+
+
 
 **R-CNN问题所在：**
 
