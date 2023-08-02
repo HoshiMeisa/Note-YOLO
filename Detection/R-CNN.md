@@ -110,7 +110,7 @@ SPPNet针对R-CNN的两处不足做了如下改进：
 
 ## 2.2 网络结构
 
-SPP-Net主要是在R-CNN的基础上进行改进的，它仍然延续R-CNN的多阶段的处理过程(如上图所示)：
+SPP-Net主要是在R-CNN的基础上进行改进的，它仍然延续R-CNN的多阶段的处理过程 (如上图所示)：
 
 1. Extract Region Proposal，使用Selective Search的方法提取2000个候选区域。
 2. Compute CNN features，使用CNN对输入图片进行特征提取并将步骤1提取的候选区域映射到conv5的Feature Map，使用SPP Layer统一Feature的输出送入全连接层。
@@ -126,34 +126,34 @@ SPP-Net主要是在R-CNN的基础上进行改进的，它仍然延续R-CNN的多
 
 若CNN模型最后几层包含全连接层，则意味着我必须resize输入尺寸，常见的两种resize方法crop和warp会导致图像信息丢失和图像形变。SPP Layer解决了这个问题，SPP Layer接受不同size的输入并输出相同size的Feature Map，我们在conv5层和全链接层之间加入SPP Layer，即替换掉原来的pooling5层，那对于不同size的Region Proposal的Feature Map就不需要再进行resize，直接可以将SPP Layer的输出送入全连接网络。
 
-### 2.3.2 **SPP layer 输入**
+### 2.3.2 **SPP Layer输入**
 
 不同size的Region Proposal映射的Feature Maps。
 
 注意：对于同一卷积网络，当输入图片尺寸变化时，得到Feature Map的通道数是不变的（通道数由卷积核确定，而不是输入图片尺寸确定），长和宽会发生变化。
 
-### 2.3.3 **SPP layer的具体操作**
+### 2.3.3 **SPP Layer的具体操作**
 
-假设Feature Maps尺寸为 W * H * C，对于每个通道的feature map进行多次max pooling操作将max pooling的结果以向量形式组合在一起。多个通道的向量最终拼接在一起。
+假设Feature Maps尺寸为 W ∗ H ∗ C，对于每个通道的Feature Map进行多次Max Pooling操作将Max Pooling的结果以向量形式组合在一起。多个通道的向量最终拼接在一起。
 
-SPP layer输入尺寸为 W * H * 256，进行三次max pooling操作，结果分别是`1*1`,`2*2`,`4*4`。将三次max pooling的结果拼接在一起，最终向量长度就是`1*1*256 + 2*2*256 + 4*4*256 = 21*256` 。至此就实现了不管输入尺寸为多少，SPP layer输出都是21*256的特征向量。
+SPP Layer输入尺寸为 W ∗ H ∗ 256，进行三次Max Pooling操作，结果分别是 1 ∗ 1, 2 ∗ 2, 4 ∗ 4。将三次Max Pooling的结果拼接在一起，最终向量长度就是 1 ∗ 1 ∗ 256 + 2 ∗ 2 ∗ 256 + 4 ∗ 4 ∗ 256 = 21 ∗ 256  。至此就实现了无论输入尺寸为多少，SPP Layer输出都是21 ∗ 256的特征向量。
 
-注意：对于不同尺寸的feature map，max pooling操作时的window size和stride是不同的。假设输入feature map的尺寸为 a∗a ，max pooling结果的尺寸为 n∗n ，则 $size = a \div n, \ stride = a \div n$。
+注意：对于不同尺寸的Feature Map，Max Pooling操作时的window size和stride是不同的。假设输入Feature Map的尺寸为 a ∗ a ，Max Pooling结果的尺寸为 n ∗ n ，则 $size = a \div n, \ stride = a \div n$。
 
 ### 2.3.4 特征映射
 
-在SPPNet中，一整张图输入CNN网络中，然后经过5个卷积层得到整张图片的conv5的Feature Maps，然后我们需要从这整个Feature Maps上截取出每个region proposal对应的feature，如下图所示
+在SPPNet中，一整张图输入CNN网络中，然后经过5个卷积层得到整张图片的conv5的Feature Maps，然后我们需要从这整个Feature Maps上截取出每个Region Proposal对应的feature，如下图所示
 
 <img src="./.assets/image-20230730200459171.png" alt="image-20230730200459171" style="zoom: 50%;" />
 
-具体映方法如下：[[知乎]原始图片中的ROI如何映射到到feature map](https://zhuanlan.zhihu.com/p/24780433)
+具体映方法如下：[[知乎]原始图片中的ROI如何映射到到Feature Map](https://zhuanlan.zhihu.com/p/24780433)
 
 ## 2.4 总结
 
 **不足之处** :
 
-1. 整个过程还是multi-stage pipeline，还是需要额外保存feature map以供输入SVM进行分类，因此空间的消耗很大。
-2. 在fine-tune的时候SPPNet不像R-CNN一样，SPPNet不会更新SPP layer之前的conv layers，限制了准确性。
+1. 整个过程还是multi-stage pipeline，还是需要额外保存Feature Map以供输入SVM进行分类，因此空间的消耗很大。
+2. 在fine-tune的时候SPPNet不像R-CNN一样，SPPNet不会更新SPP Layer之前的conv layers，限制了准确性。
 
 # 3 Fast R-CNN
 
@@ -169,7 +169,7 @@ Fast R-CNN网络将整个图像和一组候选框作为输入。网络首先使�
 
 ### 3.2.1 RoI池化层
 
-这里唯一需要解释的就是RoI pooling layer。如果特征图(feature map)上的RoI大小是 h∗w (这里忽略了通道数)，将这个特征图划分为 h/H∗w/W 个网格，每个网格大小为H\*W，对每个网格做max pooling，这样得到pooling以后的大小就是H∗W（在文章中，VGG16网络使用H=W=7的参数，上图中绘制的是6x6的）。无论原始的RoI多大，最后都转化为7\*7大小的特征图。本文将RoI池化为7*7的输出，其实这一层就是SPP的特例，SPP金字塔只有一层就是这样的。
+这里唯一需要解释的就是RoI Pooling Layer。如果特征图(Feature map)上的RoI大小是 h ∗ w (这里忽略了通道数)，将这个特征图划分为 $\frac{h}{H} ∗ \frac{w}{W}$ 个网格，每个网格大小为H ∗ W，对每个网格做Max Pooling，这样得到pooling以后的大小就是H ∗ W（在文章中，VGG16网络使用H=W=7的参数，上图中绘制的是6x6的）。无论原始的RoI多大，最后都转化为7 ∗ 7大小的特征图。本文将RoI池化为7 ∗ 7的输出，其实这一层就是SPP的特例，SPP金字塔只有一层就是这样的。
 
 ### 3.2.2 损失函数
 
@@ -191,37 +191,33 @@ Fast R-CNN网络将整个图像和一组候选框作为输入。网络首先使�
 
 为了清楚起见，假设每个小批量($N = 1$)只有一个图像，扩展到$N > 1$是显而易见的，因为前向传播独立地处理所有图像。
 
-令$x_i \in \mathbb{R}$是到RoI池化层的第$i$个激活输入，并且令$y_{rj}$是来自第$r$个RoI层的第$j$个输出。RoI池化层计算$y_{rj} = x_{i \ast(r, j)}$，其中$x_{i \ast(r, j)} = argmax_{i’ \in \mathcal{R}(r, j)}x_{i’}$。$\mathcal{R}(r, j)$是输出单元$y_{rj}$最大池化的子窗口中的输入的索引集合。单个$x_i$可以被分配给几个不同的输出$y_{rj}$。
+令 $x_i \in \mathbb{R}$ 是到RoI池化层的第 $i$ 个激活输入，并且令 $y_{rj}$ 是来自第 $r$ 个RoI层的第 $j$ 个输出。RoI池化层计算$y_{rj} = x_{i \ast(r, j)}$，其中 $x_{i \ast(r, j)} = argmax_{i’ \in \mathcal{R}(r, j)}x_{i’}$。$\mathcal{R}(r, j)$是输出单元 $y_{rj}$ 最大池化的子窗口中的输入的索引集合。单个 $x_i$ 可以被分配给几个不同的输出 $y_{rj}$。
 
-RoI池化层反向传播函数通过遵循argmax switches来计算关于每个输入变量$x_i$的损失函数的偏导数：
+RoI池化层反向传播函数通过遵循argmax switches来计算关于每个输入变量 $x_i$ 的损失函数的偏导数：
 
-换句话说，对于每个小批量RoI $r$和对于每个池化输出单元$y_{rj}$，如果$i$是$y_{rj}$通过最大池化选择的argmax，则将这个偏导数$\frac{\partial L}{\partial y_{rj}}$积累下来。在反向传播中，偏导数$\frac{\partial L}{\partial y_{rj}}$已经由RoI池化层顶部的层的反向传播函数计算。
-
-
+换句话说，对于每个小批量RoI $r$和对于每个池化输出单元 $y_{rj}$，如果 $i$ 是 $y_{rj}$ 通过最大池化选择的argmax，则将这个偏导数 $\frac{\partial L}{\partial y_{rj}}$ 积累下来。在反向传播中，偏导数 $\frac{\partial L}{\partial y_{rj}}$ 已经由RoI池化层顶部的层的反向传播函数计算。
 
 # 4 Faster R-CNN
 
 ## 4.1 简介
 
-经过R-CNN和Fast RCNN的积淀，Ross B. Girshick在2016年提出了新的Faster RCNN，在结构上，Faster RCNN已经将特征抽取(feature extraction)，proposal提取，bounding box regression(rect refine)，classification都整合在了一个网络中，使得综合性能有较大提高，在检测速度方面尤为明显。
+经过R-CNN和Fast RCNN的积淀，Ross B. Girshick在2016年提出了新的Faster RCNN，在结构上，Faster R-CNN已经将特征抽取(feature extraction)，proposal提取，bounding box regression(rect refine)，classification都**整合在了一个网络中**，使得综合性能有较大提高，在检测速度方面尤为明显。
 
 <img src="./.assets/image-20230802095409060.png" alt="image-20230802095409060" style="zoom: 67%;" />
 
-依作者看来，如图1，Faster RCNN其实可以分为4个主要内容：
+如上图Faster RCNN其实可以分为4个主要内容：
 
-1. Conv layers。作为一种CNN网络目标检测方法，Faster RCNN首先使用一组基础的conv+relu+pooling层提取image的feature maps。该feature maps被共享用于后续RPN层和全连接层。
-2. Region Proposal Networks。RPN网络用于生成region proposals。该层通过softmax判断anchors属于positive或者negative，再利用bounding box regression修正anchors获得精确的proposals。
-3. Roi Pooling。该层收集输入的feature maps和proposals，综合这些信息后提取proposal feature maps，送入后续全连接层判定目标类别。
-4. Classification。利用proposal feature maps计算proposal的类别，同时再次bounding box regression获得检测框最终的精确位置。
+1. Conv layers。作为一种CNN网络目标检测方法，Faster RCNN首先使用一组基础的conv+relu+pooling层提取image的Feature Maps。该Feature Maps被共享用于后续RPN层和全连接层。
+2. Region Proposal Networks。RPN网络用于生成Region Proposals。该层通过softmax判断anchors属于positive或者negative，再利用bounding box regression修正anchors获得精确的proposals。
+3. Roi Pooling。该层收集输入的Feature Maps和proposals，综合这些信息后提取proposal Feature Maps，送入后续全连接层判定目标类别。
+4. Classification。利用proposal Feature Maps计算proposal的类别，同时再次bounding box regression获得检测框最终的精确位置。
 
-所以本文以上述4个内容作为切入点介绍Faster R-CNN网络。
-
-图2展示了python版本中的VGG16模型中的faster_rcnn_test.pt的网络结构，可以清晰的看到该网络对于一副任意大小PxQ的图像：
+下图展示了python版本中的VGG16模型中的faster_rcnn_test.pt的网络结构，可以清晰的看到该网络对于一副任意大小PxQ的图像：
 
 - 首先缩放至固定大小MxN，然后将MxN图像送入网络；
 - 而Conv layers中包含了13个conv层+13个relu层+4个pooling层；
 - RPN网络首先经过3x3卷积，再分别生成positive anchors和对应bounding box regression偏移量，然后计算出proposals；
-- 而Roi Pooling层则利用proposals从feature maps中提取proposal feature送入后续全连接和softmax网络作classification（即分类proposal到底是什么object）。
+- 而Roi Pooling层则利用proposals从Feature Maps中提取proposal feature送入后续全连接和softmax网络作classification（即分类proposal到底是什么object）。
 
 <img src="./.assets/image-20230802095904127.png" alt="image-20230802095904127" style="zoom:50%;" />
 
@@ -229,8 +225,37 @@ RoI池化层反向传播函数通过遵循argmax switches来计算关于每个�
 
 ### 4.2.1 Region Proposal Networks (RPN)
 
-经典的检测方法生成检测框都非常耗时，如OpenCV adaboost使用滑动窗口+图像金字塔生成检测框；或如R-CNN使用SS(Selective Search)方法生成检测框。而Faster RCNN则抛弃了传统的滑动窗口和SS方法，直接使用RPN生成检测框，这也是Faster R-CNN的巨大优势，能极大提升检测框的生成速度。
+经典的检测方法生成检测框都非常耗时，如OpenCV adaboost使用滑动窗口+图像金字塔生成检测框；或如R-CNN使用SS(Selective Search)方法生成检测框。而Faster RCNN则抛弃了传统的滑动窗口和SS方法，直接**使用RPN生成检测框**，这也是Faster R-CNN的巨大优势，能极大提升检测框的生成速度。
 
 <img src="./.assets/image-20230802100252465.png" alt="image-20230802100252465" style="zoom: 50%;" />
 
 上图4展示了RPN网络的具体结构。可以看到RPN网络实际分为2条线，上面一条通过softmax分类anchors获得positive和negative分类，下面一条用于计算对于anchors的bounding box regression偏移量，以获得精确的proposal。而最后的Proposal层则负责综合positive anchors和对应bounding box regression偏移量获取proposals，同时剔除太小和超出边界的proposals。其实整个网络到了Proposal Layer这里，就完成了相当于目标定位的功能。
+
+### 4.2.2 Anchors
+
+提到RPN网络，就不能不说anchors。所谓anchors，实际上就是一组由 `rpn/generate_anchors.py` 生成的矩形。直接运行作者demo中的 `generate_anchors.py` 可以得到以下输出：
+
+```python
+[[ -84.  -40.   99.   55.]
+ [-176.  -88.  191.  103.]
+ [-360. -184.  375.  199.]
+ [ -56.  -56.   71.   71.]
+ [-120. -120.  135.  135.]
+ [-248. -248.  263.  263.]
+ [ -36.  -80.   51.   95.]
+ [ -80. -168.   95.  183.]
+ [-168. -344.  183.  359.]]
+```
+
+其中每行的4个值 $(x_1,\  y_1,\ x_2,\ y_2)$ 表矩形左上和右下角点坐标。9个矩形共有3种形状，长宽比为大约为 width : height ∈ {1 : 1, 1 : 2, 2 : 1} 三种，如下图。实际上通过anchors就引入了检测中常用到的多尺度方法。
+
+<img src="./.assets/image-20230802134305262.png" alt="image-20230802134305262" style="zoom:50%;" />
+
+注：关于上面的anchors size，其实是根据检测图像设置的。在python demo中，会把任意大小的输入图像reshape成800x600（即图2中的M=800，N=600）。再回头来看anchors的大小，anchors中长宽1:2中最大为352x704，长宽2:1中最大736x384，基本是覆盖了800x600的各个尺度和形状。
+
+那么这9个anchors是做什么的呢？借用Faster RCNN论文中的原图，如图7，遍历Conv layers计算获得的feature maps，为每一个点都配备这9种anchors作为初始的检测框。这样做获得检测框很不准确，不过，后面还有2次bounding box regression可以修正检测框位置。
+
+![img](./.assets/v2-c93db71cc8f4f4fd8cfb4ef2e2cef4f4_720w.webp)
+
+
+
