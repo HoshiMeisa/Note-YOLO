@@ -32,7 +32,7 @@ Transformer由论文 [*Attention is All You Need*](https://arxiv.org/pdf/1706.03
 
 Transformer 中单词的输入表示 **X** 由**单词 Embedding** 和**位置 Embedding** （PE, Positional Encoding）相加得到。
 
-<img src="./.assets/image-20230716162516270.png" alt="image-20230716162516270" style="zoom: 33%;" />
+<img src="./.assets/image-20230716162516270.png" alt="image-20230716162516270" style="zoom: 50%;" />
 
 ## 2.1 单词 Embedding
 
@@ -226,5 +226,5 @@ Softmax 根据输出矩阵的每一行预测下一个单词：
 
 - Transformer 与 RNN 不同，可以比较好地并行训练。
 - Transformer 本身是不能利用单词的顺序信息的，因此需要在输入中添加位置 Embedding，否则 Transformer 就是一个词袋模型了。
-- Transformer 的重点是 Self-Attention 结构，其中用到的 **Q, K, V**矩阵通过输出进行线性变换得到。
+- Transformer 的重点是 Self-Attention 结构，其中用到的 **Q, K, V** 矩阵通过输出进行线性变换得到。
 - Transformer 中 Multi-Head Attention 中有多个 Self-Attention，可以捕获单词之间多种维度上的相关系数 attention score。
