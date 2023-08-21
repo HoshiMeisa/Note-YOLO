@@ -29,15 +29,15 @@ RCNN是一种物体检测算法，它可以对一张图片中的物体进行定�
 4. 同对于属于某个类别的候选区域，使用Bounding Box Regression可以显著减小定位误差，更加精细地调整候选区域的位置。(对于每个类别，都有一个回归器 ) 
 
 
-# 1.2 网络结构
+## 1.2 网络结构
 
-## 1.2.1 特征提取CNN
+### 1.2.1 特征提取CNN
 
 R-CNN直接使用了AlexNet作为特征提取网络。
 
 <img src="/home/kana/.config/Typora/typora-user-images/image-20230801211450191.png" alt="image-20230801211450191" style="zoom: 67%;" />
 
-# 1.3 总结
+## 1.3 总结
 
 在论文中，作者认为 R-CNN 较之前的算法，能够取得30%的改进是主要是基于以下两点：
 
@@ -49,9 +49,9 @@ R-CNN的不足之处：
 - 速度慢，因为首先需要Selective Search算法生成2K个候选区域分别提取特征，而又由于候选区域的重叠问题，所以这中间有着大量的重复计算（这也是后面的R-CNN系列的改进方向）。
 - 训练步骤繁琐，需要先预训练CNN，然后微调CNN，再训练20个SVM，20个回归器，期间还要涉及用NMS去除候选冗余框。
 
-# 1.4 附录
+## 1.4 附录
 
-## 1.4.1 Precision-Recall Curve的绘制方法
+### 1.4.1 Precision-Recall Curve的绘制方法
 
 按照检测出的**某个类的**矩形框的置信度从高到低进行排序，然后计算累积的 TP 和 FP 数量并计算出 Precision 与 Recall (注意此处计算的是 TP/All Ground-Truths)，如下表：
 
@@ -89,7 +89,7 @@ $$
 2. 缩放操作导致图片失真
 3. SVM和bbox回归阶段需要将特征存储到磁盘，很费时间空间，同时降低了速度
 
-## 1.4.2 难分样本挖掘 (Hard Negative Mining)
+### 1.4.2 难分样本挖掘 (Hard Negative Mining)
 
 在训练过程中，作者使用到了难分样本挖掘，介绍如下。
 
@@ -103,7 +103,7 @@ $$
 
 SPPNet针对R-CNN的两处不足做了如下改进：
 
-- 将Selective Search的Region Proposal不放入CNN进行特征提取，而是**直接把原图片放入CNN进行特征提取，然后根据Region Proposal的位置在Conv5的Feature Map做一个特征映射，再截取出每一个Region Proposal所映射的Feature Map**。这样就避免了重复性用CNN对每个Region Proposal单独提取特征，节省了大量时间。
+- 不是像R-CNN那样将通过Selective Search得到的Region Proposal放入CNN进行特征提取，而是**直接把原图放入CNN进行特征提取，然后根据Region Proposal的位置在Conv5的Feature Map做一个特征映射，再截取出每一个Region Proposal所映射的Feature Map**。这样就避免了重复性用CNN对每个Region Proposal单独提取特征，节省了大量时间。
 - SPPNet在原来CNN的Conv5层之后加入**Spatial Pyramid Pooling Layer（空间金字塔池化层）**替换掉原来的Pooling5 layer，由于SPP Layer可以接受不同尺寸的Feature Maps并输出相同尺寸的Feature Maps，因此避免了resize而导致的图片形变问题。
 
 <img src="./.assets/image-20230802091303892.png" alt="image-20230802091303892" style="zoom:50%;" />
