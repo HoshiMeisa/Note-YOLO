@@ -55,6 +55,8 @@ $$
 
 在极限大尺度变化场景下，它需要模型能充分进行高层与底层信息交互。基于跳层与跨尺度连接机制，所提GFPN能够尽可能扩展，类似于Giraffe Neck。基于这种的重Neck与轻骨干设计，所提GiraffeDet可以更好的平衡高精度与高效率。
 
+
+
 # **GiraffeDet Family**
 
 按照所提S2D-chain与GFPN，我们开发了一类GiraffeDet模型以满足不同资源约束。已有方案通过对骨干进行缩放调整模型大小，而GiraffeDet则聚焦于调整Neck部分。具体来说，我们采用两个系数 $\phi_d, \phi_w$ 调整GFPN的深度与宽度：
