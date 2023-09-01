@@ -39,7 +39,7 @@ YOLOv5是一种单阶段目标检测算法，该算法在YOLOv4的基础上添�
 
 ### 3.2.2 输入端细节详解
 
-（1）**Mosaic数据增强**：[详见YOLOv4笔记]()(`../YOLOv4/YOLOv4-2.md`)当中的详解
+（1）**Mosaic数据增强**：[详见YOLOv4笔记](../YOLOv4/YOLOv4-2.md)当中的详解
 
 （2）**自适应锚框计算**：
 
@@ -112,5 +112,3 @@ Yolov4的Neck结构中，采用的都是普通的卷积操作。而Yolov5的Neck
 其中计算bbox loss的部分更新，新版为：
 
 <img src="./.assets/image-20230730143836512.png" alt="image-20230730143836512" style="zoom:50%;" />
-
-（2）NMS非极大值抑制

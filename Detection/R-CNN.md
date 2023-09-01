@@ -122,17 +122,17 @@ SPP-Net主要是在R-CNN的基础上进行改进的，它仍然延续R-CNN的多
 
 ## 2.3 细节讲解
 
-### 2.3.1 **空间金字塔池化 (Spatial Pyramid Pooling)**
+### 2.3.1 空间金字塔池化 (Spatial Pyramid Pooling)
 
 若CNN模型最后几层包含全连接层，则意味着我必须resize输入尺寸，常见的两种resize方法crop和warp会导致图像信息丢失和图像形变。SPP Layer解决了这个问题，SPP Layer接受不同size的输入并输出相同size的Feature Map，我们在conv5层和全链接层之间加入SPP Layer，即替换掉原来的pooling5层，那对于不同size的Region Proposal的Feature Map就不需要再进行resize，直接可以将SPP Layer的输出送入全连接网络。
 
-### 2.3.2 **SPP Layer输入**
+### 2.3.2 SPP Layer输入
 
 不同size的Region Proposal映射的Feature Maps。
 
 注意：对于同一卷积网络，当输入图片尺寸变化时，得到Feature Map的通道数是不变的（通道数由卷积核确定，而不是输入图片尺寸确定），长和宽会发生变化。
 
-### 2.3.3 **SPP Layer的具体操作**
+### 2.3.3 SPP Layer的具体操作
 
 假设Feature Maps尺寸为 W ∗ H ∗ C，对于每个通道的Feature Map进行多次Max Pooling操作将Max Pooling的结果以向量形式组合在一起。多个通道的向量最终拼接在一起。
 
